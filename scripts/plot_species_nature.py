@@ -41,12 +41,12 @@ plt.rcParams.update({
 })
 
 def save_nature_tiff(fig, filepath):
-    """Guarda la figura en TIFF con compresión LZW y 300 DPI"""
+    
     fig.savefig(filepath, dpi=300, format='tiff', pil_kwargs={'compression': 'tiff_lzw'}, bbox_inches='tight')
     fig.savefig(filepath.replace('.tiff', '.svg'), format='svg', bbox_inches='tight')
 
 def clean_tax_name(tax_string):
-    """Limpia el string taxonómico de EPI2ME para extraer solo la especie"""
+    
     if "Unclassified" in str(tax_string):
         return "Unclassified"
     parts = str(tax_string).split(';')

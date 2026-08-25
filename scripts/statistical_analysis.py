@@ -33,11 +33,7 @@ def chao1_index(counts):
         return s_obs + (singletons * (singletons - 1)) / 2
 
 def dominance_index(counts):
-    """
-    Dominance Index (Simpson's dominance) = sum(p_i^2)
-    It ranges from 0 to 1, where larger values mean one or few taxa dominate the community.
-    Reference: Simpson, E.H. (1949). Measurement of diversity. Nature, 163(4148), 688.
-    """
+    
     p = counts / counts.sum()
     return np.sum(p**2)
 

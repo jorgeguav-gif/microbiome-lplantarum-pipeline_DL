@@ -6,32 +6,6 @@
 @github: jorgeguav-gif
 """
 
-"""
-microbiome_dl_pipeline.py
-Pipeline de Deep Learning para análisis del microbioma 16S
-
-Tres proyectos integrados:
-    A) Predictor de Fenotipo (Multi-head MLP): Predice sexo y tratamiento
-       a partir de perfiles de abundancia
-    B) VAE para Eubiosis: Autoencoder variacional entrenado con controles
-       para cuantificar disbiosis en samples tratadas
-    C) Transformer para 16S: Clasificación taxonómica a nivel de género
-       usando tokenización por k-mers de lecturas 16S
-
-Diseño experimental:
-    - 64 ratones CD1 (32M + 32F)
-    - 4 tratamientos: Control, LM20, G7, P128 (cepas de P. plantarum)
-    - Secuenciación: Oxford Nanopore MinION, kit SQK-16S114-24
-
-Uso:
-    python microbiome_dl_pipeline.py predict --otu_table ... --metadata ...
-    python microbiome_dl_pipeline.py vae --otu_table ... --metadata ...
-    python microbiome_dl_pipeline.py transformer --reads_dir ... --taxonomy_ref ...
-
-Autor: Jorge
-Date: Julio 2026
-"""
-
 import argparse
 import os
 import sys
@@ -90,7 +64,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 def configurar_reproducibilidad(seed: int = 42):
-    """Fijar semillas para reproducibilidad completa."""
+    
     np.random.seed(seed)
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
@@ -100,7 +74,7 @@ def configurar_reproducibilidad(seed: int = 42):
     logger.info(f"Semilla de reproducibilidad fijada: {seed}")
 
 def detectar_dispositivo():
-    """Detectar y configurar el dispositivo de cómputo (GPU o CPU)."""
+    
     if torch.cuda.is_available():
         device = torch.device('cuda')
         gpu_name = torch.cuda.get_device_name(0)
@@ -112,12 +86,12 @@ def detectar_dispositivo():
     return device
 
 def crear_directorios(*dirs):
-    """Crear múltiples directorios si no existen."""
+    
     for d in dirs:
         Path(d).mkdir(parents=True, exist_ok=True)
 
 def guardar_metricas(metricas: dict, filepath: str):
-    """Guardar métricas en formato JSON."""
+    
     def convert(obj):
         if isinstance(obj, (np.integer,)):
             return int(obj)
@@ -136,19 +110,9 @@ def guardar_metricas(metricas: dict, filepath: str):
 # =============================================================================
 
 class DatosMicrobioma:
-    """
-    Clase para cargar y preprocesar datos de microbioma.
-    Maneja tabla OTU y metadata con validación robusta.
-    """
 
     def __init__(self, otu_path: str, metadata_path: str):
-        """
-        Cargar tabla OTU y metadata desde files CSV.
-
-        Parámetros:
-            otu_path: Ruta a la tabla OTU (samples × taxa)
-            metadata_path: Ruta al file de metadata
-        """
+        
         logger.info(f"Cargando tabla OTU: {otu_path}")
         self.otu = pd.read_csv(otu_path, index_col=0)
         logger.info(f"  Dimensiones OTU: {self.otu.shape[0]} samples × {self.otu.shape[1]} taxa")
@@ -164,7 +128,7 @@ class DatosMicrobioma:
         self._codificar_variables()
 
     def _alinear_samples(self):
-        """Alinear samples entre OTU y metadata."""
+        
         comunes = self.otu.index.intersection(self.metadata.index)
         if len(comunes) == 0:
             raise ValueError("No hay samples en común entre OTU y metadata")
@@ -174,7 +138,7 @@ class DatosMicrobioma:
         logger.info(f"  Samples alineadas: {len(comunes)}")
 
     def _identificar_columnas(self):
-        """Identificar columnas de tratamiento, sexo y batch en metadata."""
+        
         cols = self.metadata.columns.str.lower()
 
         for patron in ['tratamiento', 'treatment', 'trat', 'group']:
@@ -205,7 +169,7 @@ class DatosMicrobioma:
         logger.info(f"  Columna batch: '{self.col_batch}'")
 
     def _codificar_variables(self):
-        """Codificar variables categóricas como enteros."""
+        
         self.le_tratamiento = LabelEncoder()
         self.tratamiento = self.le_tratamiento.fit_transform(
             self.metadata[self.col_tratamiento]
@@ -223,15 +187,7 @@ class DatosMicrobioma:
             self.clases_sexo = ['Desconocido']
 
     def obtener_abundancias(self, normalizar: bool = True) -> np.ndarray:
-        """
-        Obtener matriz de abundancias como array numpy.
-
-        Parámetros:
-            normalizar: Si True, normalizar a abundancia relativa
-
-        Retorna:
-            Matriz numpy de abundancias (samples × taxa)
-        """
+        
         X = self.otu.values.astype(np.float32)
         if normalizar:
             sumas = X.sum(axis=1, keepdims=True)
@@ -240,12 +196,12 @@ class DatosMicrobioma:
         return X
 
     def obtener_indices_control(self) -> np.ndarray:
-        """Obtener índices de las samples de control."""
+        
         control_mask = self.metadata[self.col_tratamiento] == 'Control'
         return np.where(control_mask)[0]
 
     def obtener_indices_tratados(self) -> np.ndarray:
-        """Obtener índices de las samples tratadas (no control)."""
+        
         tratado_mask = self.metadata[self.col_tratamiento] != 'Control'
         return np.where(tratado_mask)[0]
 
@@ -253,23 +209,10 @@ class DatosMicrobioma:
 # =============================================================================
 
 class DatasetAbundancia(Dataset):
-    """
-    Dataset de PyTorch para perfiles de abundancia.
-    Incluye aumento de datos con ruido gaussiano.
-    """
 
     def __init__(self, X: np.ndarray, y_sexo: np.ndarray, y_trat: np.ndarray,
                  aumentar: bool = False, sigma_ruido: float = 0.01):
-        """
-        Inicializar dataset.
-
-        Parámetros:
-            X: Matriz de abundancias (n_samples × n_taxa)
-            y_sexo: Etiquetas de sexo
-            y_trat: Etiquetas de tratamiento
-            aumentar: Si True, aplicar aumento de datos
-            sigma_ruido: Desviación estándar del ruido gaussiano
-        """
+        
         self.X = torch.FloatTensor(X)
         self.y_sexo = torch.LongTensor(y_sexo)
         self.y_trat = torch.LongTensor(y_trat)
@@ -296,22 +239,10 @@ class DatasetAbundancia(Dataset):
         return self.aumentar
 
 class DatasetSecuencias(Dataset):
-    """
-    Dataset de PyTorch para secuencias 16S tokenizadas por k-mers.
-    """
 
     def __init__(self, secuencias: list, etiquetas: np.ndarray,
                  kmer_size: int = 6, vocab: dict = None, max_len: int = 512):
-        """
-        Inicializar dataset de secuencias.
-
-        Parámetros:
-            secuencias: Lista de secuencias de ADN
-            etiquetas: Etiquetas taxonómicas codificadas
-            kmer_size: Tamaño del k-mer
-            vocab: Vocabulario de k-mers (si None, se construye)
-            max_len: Longitud máxima de la secuencia tokenizada
-        """
+        
         self.kmer_size = kmer_size
         self.max_len = max_len
         self.etiquetas = torch.LongTensor(etiquetas)
@@ -324,7 +255,7 @@ class DatasetSecuencias(Dataset):
         self.tokens = [self._tokenizar(seq) for seq in secuencias]
 
     def _construir_vocabulario(self, secuencias: list) -> dict:
-        """Construir vocabulario de k-mers a partir de las secuencias."""
+        
         kmers = Counter()
         for seq in secuencias:
             seq = seq.upper().replace('N', '')
@@ -341,7 +272,7 @@ class DatasetSecuencias(Dataset):
         return vocab
 
     def _tokenizar(self, seq: str) -> torch.LongTensor:
-        """Tokenizar una secuencia en k-mers."""
+        
         seq = seq.upper().replace('N', '')
         tokens = [self.vocab.get('<CLS>', 2)]
 
@@ -367,30 +298,11 @@ class DatasetSecuencias(Dataset):
 # =============================================================================
 
 class PredictorMultiHead(nn.Module):
-    """
-    Red neuronal MLP multi-cabeza para predicción simultánea
-    de sexo (2 clases) y tratamiento (4 clases) a partir de
-    perfiles de abundancia microbiana.
-
-    Arquitectura:
-        Input → Shared MLP → BatchNorm → GELU → Dropout
-              → Head_Sexo (2 clases)
-              → Head_Tratamiento (4 clases)
-    """
 
     def __init__(self, n_taxa: int, n_clases_sexo: int = 2,
                  n_clases_trat: int = 4, hidden_dims: list = None,
                  dropout: float = 0.3):
-        """
-        Inicializar predictor multi-cabeza.
-
-        Parámetros:
-            n_taxa: Número de taxa (dimensión de entrada)
-            n_clases_sexo: Número de clases de sexo
-            n_clases_trat: Número de clases de tratamiento
-            hidden_dims: Dimensiones de capas ocultas compartidas
-            dropout: Tasa de dropout
-        """
+        
         super().__init__()
 
         if hidden_dims is None:
@@ -424,32 +336,14 @@ class PredictorMultiHead(nn.Module):
         )
 
     def forward(self, x):
-        """
-        Forward pass.
-
-        Parámetros:
-            x: Tensor de abundancias (batch × n_taxa)
-
-        Retorna:
-            logits_sexo: Logits para clasificación de sexo
-            logits_trat: Logits para clasificación de tratamiento
-        """
+        
         features = self.troncal(x)
         logits_sexo = self.cabeza_sexo(features)
         logits_trat = self.cabeza_tratamiento(features)
         return logits_sexo, logits_trat
 
     def obtener_importancia(self, x: torch.Tensor) -> np.ndarray:
-        """
-        Calcular importancia de features usando gradientes integrados
-        (aproximación simple basada en gradientes).
-
-        Parámetros:
-            x: Tensor de entrada (1 × n_taxa)
-
-        Retorna:
-            Importancia por taxón (array numpy)
-        """
+        
         self.eval()
         x = x.clone().requires_grad_(True)
         logits_sexo, logits_trat = self(x)
@@ -461,11 +355,7 @@ class PredictorMultiHead(nn.Module):
         return importancia
 
 def ejecutar_proyecto_a(args):
-    """
-    Proyecto A: Predictor de Fenotipo Multi-cabeza.
-    Entrena un MLP para predecir sexo y tratamiento simultáneamente
-    usando validación cruzada (8-fold o LOO).
-    """
+    
     logger.info("=" * 60)
     logger.info("  PROYECTO A: PREDICTOR DE FENOTIPO (Multi-head MLP)")
     logger.info("=" * 60)
@@ -728,27 +618,10 @@ def ejecutar_proyecto_a(args):
 # =============================================================================
 
 class VAEMicrobioma(nn.Module):
-    """
-    Variational Autoencoder para cuantificación de eubiosis/disbiosis.
-    Se entrena SOLO con samples de control (estado "sano").
-    El error de reconstrucción en samples tratadas indica disbiosis.
-
-    Arquitectura:
-        Encoder: Input → Hidden → μ, σ  (espacio latente)
-        Decoder: z ~ N(μ, σ) → Hidden → Output reconstruido
-    """
 
     def __init__(self, n_taxa: int, hidden_dim: int = 128,
                  latent_dim: int = 2, dropout: float = 0.2):
-        """
-        Inicializar VAE.
-
-        Parámetros:
-            n_taxa: Dimensión de entrada (número de taxa)
-            hidden_dim: Dimensión de capas ocultas
-            latent_dim: Dimensión del espacio latente
-            dropout: Tasa de dropout
-        """
+        
         super().__init__()
 
         self.latent_dim = latent_dim
@@ -781,24 +654,24 @@ class VAEMicrobioma(nn.Module):
         )
 
     def encode(self, x):
-        """Codificar entrada al espacio latente."""
+        
         h = self.encoder(x)
         mu = self.fc_mu(h)
         logvar = self.fc_logvar(h)
         return mu, logvar
 
     def reparameterize(self, mu, logvar):
-        """Truco de reparametrización para muestreo diferenciable."""
+        
         std = torch.exp(0.5 * logvar)
         eps = torch.randn_like(std)
         return mu + eps * std
 
     def decode(self, z):
-        """Decodificar del espacio latente."""
+        
         return self.decoder(z)
 
     def forward(self, x):
-        """Forward pass completo."""
+        
         mu, logvar = self.encode(x)
         z = self.reparameterize(mu, logvar)
         x_recon = self.decode(z)
@@ -806,19 +679,7 @@ class VAEMicrobioma(nn.Module):
 
     @staticmethod
     def loss_function(x_recon, x, mu, logvar, beta: float = 1.0):
-        """
-        Función de pérdida ELBO.
-
-        Parámetros:
-            x_recon: Entrada reconstruida
-            x: Entrada original
-            mu: Media latente
-            logvar: Log-varianza latente
-            beta: Peso del término KL (β-VAE)
-
-        Retorna:
-            Pérdida total, pérdida de reconstrucción, pérdida KL
-        """
+        
         recon_loss = F.mse_loss(x_recon, x, reduction='sum')
 
         kl_loss = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
@@ -827,11 +688,7 @@ class VAEMicrobioma(nn.Module):
         return total_loss, recon_loss, kl_loss
 
 def ejecutar_proyecto_b(args):
-    """
-    Proyecto B: VAE para evaluación de Eubiosis.
-    Entrena un VAE solo con samples de control y mide
-    la disbiosis como error de reconstrucción en samples tratadas.
-    """
+    
     logger.info("=" * 60)
     logger.info("  PROYECTO B: VAE PARA EUBIOSIS")
     logger.info("=" * 60)
@@ -1083,31 +940,11 @@ def ejecutar_proyecto_b(args):
 # =============================================================================
 
 class TransformerEncoder16S(nn.Module):
-    """
-    Transformer Encoder para clasificación taxonómica de lecturas 16S.
-    Usa tokenización por k-mers y clasificación a nivel de género.
-
-    Arquitectura:
-        Embedding → Positional Encoding → Transformer Encoder
-        → [CLS] token → MLP → Clase taxonómica
-    """
 
     def __init__(self, vocab_size: int, n_clases: int, d_model: int = 128,
                  nhead: int = 4, n_layers: int = 3, dim_feedforward: int = 256,
                  max_len: int = 512, dropout: float = 0.1):
-        """
-        Inicializar Transformer.
-
-        Parámetros:
-            vocab_size: Tamaño del vocabulario de k-mers
-            n_clases: Número de clases taxonómicas (géneros)
-            d_model: Dimensión del model
-            nhead: Número de cabezas de atención
-            n_layers: Número de capas del encoder
-            dim_feedforward: Dimensión de las capas FFN
-            max_len: Longitud máxima de secuencia
-            dropout: Tasa de dropout
-        """
+        
         super().__init__()
 
         self.d_model = d_model
@@ -1138,15 +975,7 @@ class TransformerEncoder16S(nn.Module):
         )
 
     def forward(self, x):
-        """
-        Forward pass.
-
-        Parámetros:
-            x: Tensor de tokens (batch × seq_len)
-
-        Retorna:
-            logits: Logits de clasificación (batch × n_clases)
-        """
+        
         batch_size, seq_len = x.shape
 
         padding_mask = (x == 0)
@@ -1167,18 +996,7 @@ class TransformerEncoder16S(nn.Module):
 
 def cargar_lecturas_y_taxonomia(reads_dir: str, taxonomy_ref: str,
                                  max_reads: int = 10000):
-    """
-    Cargar lecturas FASTQ y sus asignaciones taxonómicas.
-
-    Parámetros:
-        reads_dir: Directorio con files FASTQ filtrados
-        taxonomy_ref: Directorio con resultados de EMU
-        max_reads: Número máximo de lecturas a cargar
-
-    Retorna:
-        secuencias: Lista de secuencias de ADN
-        etiquetas: Lista de géneros asignados
-    """
+    
     import gzip
 
     logger.info(f"Cargando lecturas de: {reads_dir}")
@@ -1254,10 +1072,7 @@ def cargar_lecturas_y_taxonomia(reads_dir: str, taxonomy_ref: str,
     return secuencias, etiquetas
 
 def _generar_datos_sinteticos_transformer(n_reads: int = 5000):
-    """
-    Generar datos sintéticos de secuencias 16S para demostración.
-    Crea secuencias con patrones k-mer específicos por género.
-    """
+    
     logger.info("Generating datos sintéticos de 16S para demostración...")
 
     generos = [
@@ -1299,11 +1114,7 @@ def _generar_datos_sinteticos_transformer(n_reads: int = 5000):
     return secuencias, etiquetas
 
 def ejecutar_proyecto_c(args):
-    """
-    Proyecto C: Transformer para Clasificación 16S.
-    Clasifica lecturas 16S a nivel de género usando un
-    Transformer encoder con tokenización por k-mers.
-    """
+    
     logger.info("=" * 60)
     logger.info("  PROYECTO C: TRANSFORMER PARA CLASIFICACIÓN 16S")
     logger.info("=" * 60)
@@ -1543,21 +1354,11 @@ def ejecutar_proyecto_c(args):
 # =============================================================================
 
 def crear_parser():
-    """Crear parser de argumentos con subcomandos."""
+    
     parser = argparse.ArgumentParser(
         description='Pipeline de Deep Learning para Microbioma 16S',
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Proyectos disponibles:
-  predict      Predictor de fenotipo multi-cabeza (Proyecto A)
-  vae          VAE para evaluación de eubiosis (Proyecto B)
-  transformer  Transformer para clasificación 16S (Proyecto C)
-
-Ejemplos:
-  python microbiome_dl_pipeline.py predict --otu_table otu.csv --metadata meta.csv
-  python microbiome_dl_pipeline.py vae --otu_table otu.csv --metadata meta.csv --latent_dim 2
-  python microbiome_dl_pipeline.py transformer --reads_dir ./reads --taxonomy_ref ./emu
-        """
+        epilog=
     )
 
     subparsers = parser.add_subparsers(dest='proyecto', help='Proyecto a ejecutar')
@@ -1608,7 +1409,7 @@ Ejemplos:
     return parser
 
 def main():
-    """Punto de entrada principal del pipeline."""
+    
     parser = crear_parser()
     args = parser.parse_args()
 

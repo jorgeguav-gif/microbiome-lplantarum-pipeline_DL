@@ -21,7 +21,7 @@ def clean_tax_name(tax_string):
     return tax_string
 
 def fetch_16s_sequence(species_name):
-    """Busca la secuencia 16S ribosomal de una especie en NCBI."""
+    
     search_term = f"{species_name}[Organism] AND 16S ribosomal RNA[Title] AND 1000:2000[Sequence Length]"
     try:
         handle = Entrez.esearch(db="nucleotide", term=search_term, retmax=1)

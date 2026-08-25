@@ -6,15 +6,6 @@
 @github: jorgeguav-gif
 """
 
-"""
-setup_project.py - Crear estructura de directorios y plantilla de metadatos
-para el análisis de secuenciación 16S rRNA de ratones CD1.
-
-Proyecto: Efecto de cepas de P. plantarum (LM20, G7, P128) en microbiota intestinal
-Animales: 64 ratones CD1 (32M + 32F), 4 tratamientos
-Secuenciación: MinION Mk1D, Kit SQK-16S114-24, 3 batchs
-"""
-
 import os
 import csv
 from pathlib import Path

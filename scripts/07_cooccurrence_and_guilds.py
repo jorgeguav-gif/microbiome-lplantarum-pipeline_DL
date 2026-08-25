@@ -27,14 +27,14 @@ sns.set_style('ticks')
 plt.rcParams.update({'font.family': 'sans-serif', 'savefig.dpi': 300, 'pdf.fonttype': 42})
 
 def clean_tax_name(idx):
-    """Limpia el nombre taxonómico de EMU (toma nivel de Género o Especie)"""
+    
     parts = str(idx).split(';')
     if len(parts) > 0:
         return parts[-1].strip()
     return str(idx)
 
 def fdr_bh(pvals):
-    """Corrección de Benjamini-Hochberg (Tasa de Falso Descubrimiento)"""
+    
     pvals = np.asarray(pvals)
     n = len(pvals)
     sorted_idx = np.argsort(pvals)

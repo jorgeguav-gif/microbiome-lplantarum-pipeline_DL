@@ -17,9 +17,7 @@ from sklearn.preprocessing import StandardScaler
 from microbiome_dl_pipeline import MicrobiomeDataset, MicrobiomeVAE
 
 def get_dysbiosis_scores(model, X_tensor):
-    """
-    Calcula el puntaje de disbiosis (Reconstruction Loss + KL Divergence) para cada sample.
-    """
+    
     model.eval()
     with torch.no_grad():
         recon_batch, mu, logvar = model(X_tensor)

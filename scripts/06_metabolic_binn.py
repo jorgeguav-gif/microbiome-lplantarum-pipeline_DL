@@ -31,9 +31,7 @@ def clean_tax_name(tax_string):
 # =============================================================================
 class MetabolicBINN(nn.Module):
     def __init__(self, pathway_matrix, n_classes=2):
-        """
-        pathway_matrix: Tensor de PyTorch (n_pathways, n_species)
-        """
+        
         super().__init__()
         self.n_pathways, self.n_species = pathway_matrix.shape
         
@@ -56,10 +54,7 @@ class MetabolicBINN(nn.Module):
         return logits, metabolic_state
 
 def generar_matriz_biologica(full_taxonomies):
-    """
-    Genera una matriz binaria (Pathways x Species) simulando bases de datos KEGG/MetaCyc.
-    Asigna rutas metabólicas utilizando la taxonomía COMPLETA para incluir TODAS las bacterias.
-    """
+    
     pathways = [
         "Butyrate_Synthesis", "Acetate_Synthesis", "Propionate_Synthesis", 
         "Lactate_Production", "Secondary_Bile_Acid_Metabolism", 

@@ -12,27 +12,7 @@ file_path = r'C:\Users\Lenovo\Documents\seq\Seq_Jorge\analysis\05_deep_learning\
 with open(file_path, 'r', encoding='utf-8') as f:
     content = f.read()
 
-nature_setup = """import matplotlib
-matplotlib.use('Agg')  # Backend sin GUI para HPC
-import matplotlib.pyplot as plt
-import seaborn as sns
-
-nature_colors = ['#E64B35', '#4DBBD5', '#00A087', '#3C5488', '#F39B7F', '#8491B4', '#91D1C2', '#DC0000']
-sns.set_palette(sns.color_palette(nature_colors))
-sns.set_context('paper', font_scale=1.2)
-sns.set_style('ticks')
-plt.rcParams.update({
-    'font.family': 'sans-serif',
-    'font.sans-serif': ['Arial', 'Helvetica', 'DejaVu Sans'],
-    'pdf.fonttype': 42,
-    'ps.fonttype': 42,
-    'savefig.dpi': 300,
-    'axes.labelsize': 9,
-    'xtick.labelsize': 8,
-    'ytick.labelsize': 8,
-    'legend.fontsize': 8,
-    'figure.titlesize': 10
-})"""
+nature_setup = 
 
 content = re.sub(
     r'import matplotlib.*?import seaborn as sns', 

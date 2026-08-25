@@ -6,22 +6,6 @@
 @github: jorgeguav-gif
 """
 
-"""
-preprocess_fastq.py — Preprocesamiento de lecturas FASTQ de secuenciación 16S rRNA (Oxford Nanopore)
-
-Descripción:
-    Lee files .fastq.gz organizados por código de barras (barcode) desde una corrida
-    de secuenciación MinION, filtra las lecturas por longitud y calidad, y genera
-    files FASTQ filtrados junto con un resumen estadístico en CSV.
-
-Uso:
-    py preprocess_fastq.py --input <directorio_corrida> --output <directorio_salida> \\
-        --min-length 1000 --max-length 1800 --min-quality 10
-
-Autor: Pipeline de análisis 16S — Proyecto probióticos CD1
-Date: 2026-07-16
-"""
-
 import argparse
 import csv
 import gzip
@@ -35,39 +19,14 @@ from statistics import mean, median
 # =============================================================================
 
 def calcular_qscore_medio(quality_string: str) -> float:
-    """
-    Calcula el Q-score medio (Phred) a partir de la cadena de calidad FASTQ.
-
-    Cada carácter ASCII en la cadena de calidad representa un valor Phred:
-        Q = ord(carácter) - 33
-
-    Parámetros:
-        quality_string: cadena de calidad de una lectura FASTQ (línea 4).
-
-    Retorna:
-        Promedio aritmético de los valores Q de la lectura.
-    """
+    
     if not quality_string:
         return 0.0
     total = sum(ord(c) - 33 for c in quality_string)
     return total / len(quality_string)
 
 def parse_fastq_gzip(filepath: str):
-    """
-    Generador que lee un file .fastq.gz y produce registros FASTQ uno a uno.
-
-    Cada registro FASTQ consta de exactamente 4 líneas:
-        1. Encabezado (comienza con '@')
-        2. Secuencia de nucleótidos
-        3. Separador (comienza con '+')
-        4. Cadena de calidad (codificación Phred+33)
-
-    Parámetros:
-        filepath: ruta al file .fastq.gz
-
-    Produce:
-        Tuplas de (header, sequence, separator, quality)
-    """
+    
     with gzip.open(filepath, 'rt', encoding='utf-8') as f:
         while True:
             header = f.readline().rstrip('\n')
@@ -85,23 +44,7 @@ def parse_fastq_gzip(filepath: str):
             yield header, sequence, separator, quality
 
 def encontrar_directorio_fastq_pass(input_path: str) -> str:
-    """
-    Busca el directorio 'fastq_pass' dentro de la estructura de la corrida.
-
-    Estrategia de búsqueda (en orden):
-        1. Si input_path ES fastq_pass, usarlo directamente.
-        2. Si input_path contiene fastq_pass/ como hijo directo.
-        3. Buscar recursivamente hasta 3 niveles de profundidad.
-
-    Parámetros:
-        input_path: directorio base proporcionado por el usuario.
-
-    Retorna:
-        Ruta absoluta al directorio fastq_pass.
-
-    Lanza:
-        FileNotFoundError si no se encuentra fastq_pass.
-    """
+    
     input_path = os.path.abspath(input_path)
 
     if os.path.basename(input_path) == 'fastq_pass':
@@ -125,17 +68,7 @@ def encontrar_directorio_fastq_pass(input_path: str) -> str:
     )
 
 def obtener_barcodes(fastq_pass_dir: str) -> list:
-    """
-    Lista los subdirectorios de barcodes dentro de fastq_pass/.
-
-    Solo incluye directorios cuyo nombre comience con 'barcode' (ej: barcode01).
-
-    Parámetros:
-        fastq_pass_dir: ruta al directorio fastq_pass.
-
-    Retorna:
-        Lista ordenada de rutas absolutas a los directorios de barcode.
-    """
+    
     barcodes = []
     for entry in sorted(os.listdir(fastq_pass_dir)):
         full_path = os.path.join(fastq_pass_dir, entry)
@@ -144,15 +77,7 @@ def obtener_barcodes(fastq_pass_dir: str) -> list:
     return barcodes
 
 def listar_fastq_gz(barcode_dir: str) -> list:
-    """
-    Lista todos los files .fastq.gz dentro de un directorio de barcode.
-
-    Parámetros:
-        barcode_dir: ruta al directorio del barcode.
-
-    Retorna:
-        Lista ordenada de rutas absolutas a files .fastq.gz.
-    """
+    
     files = []
     for entry in sorted(os.listdir(barcode_dir)):
         if entry.endswith('.fastq.gz'):
@@ -165,21 +90,7 @@ def listar_fastq_gz(barcode_dir: str) -> list:
 def procesar_barcode(barcode_dir: str, output_dir: str,
                      min_length: int, max_length: int,
                      min_quality: float) -> dict:
-    """
-    Procesa todas las lecturas de un barcode: filtra por longitud y calidad.
-
-    Parámetros:
-        barcode_dir: directorio con files .fastq.gz del barcode.
-        output_dir:  directorio donde escribir el file filtrado.
-        min_length:  longitud mínima permitida (bp).
-        max_length:  longitud máxima permitida (bp).
-        min_quality: Q-score medio mínimo permitido.
-
-    Retorna:
-        Diccionario con estadísticas del barcode:
-            barcode, total_reads, passed_reads, failed_length, failed_quality,
-            mean_length, median_length, mean_qscore, median_qscore
-    """
+    
     barcode_name = os.path.basename(barcode_dir)
     files_gz = listar_fastq_gz(barcode_dir)
 
@@ -245,13 +156,7 @@ def procesar_barcode(barcode_dir: str, output_dir: str,
     return stats
 
 def escribir_resumen_csv(stats_list: list, output_path: str):
-    """
-    Escribe el resumen estadístico de todos los barcodes en un file CSV.
-
-    Parámetros:
-        stats_list:  lista de diccionarios con estadísticas por barcode.
-        output_path: ruta al file CSV de salida.
-    """
+    
     fieldnames = [
         'barcode', 'total_reads', 'passed_reads',
         'failed_length', 'failed_quality',
@@ -271,12 +176,7 @@ def escribir_resumen_csv(stats_list: list, output_path: str):
 # =============================================================================
 
 def crear_parser() -> argparse.ArgumentParser:
-    """
-    Crea el parser de argumentos de línea de comandos.
-
-    Retorna:
-        ArgumentParser configurado con todos los parámetros del script.
-    """
+    
     parser = argparse.ArgumentParser(
         description=(
             "Preprocesamiento de lecturas FASTQ de secuenciación 16S rRNA (Oxford Nanopore).\n"
@@ -313,7 +213,7 @@ def crear_parser() -> argparse.ArgumentParser:
     return parser
 
 def main():
-    """Función principal: parsea argumentos, ejecuta el pipeline de preprocesamiento."""
+    
     parser = crear_parser()
     args = parser.parse_args()
 

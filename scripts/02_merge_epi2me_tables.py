@@ -6,15 +6,6 @@
 """
 
 #!/usr/bin/env python3
-"""
-Script para unificar las tablas de abundancia de EPI2ME (wf-16s) de los 3 Batchs.
-Este script:
-1. Busca los files de abundancia generados por EPI2ME para Batch1, Batch2 y Batch3.
-2. Renombra las columnas de barcodes para que coincidan con la metadata (ej. barcode01 en Batch1 -> L1_BC01).
-3. Transpone la matriz para que las Filas sean Samples y las Columnas sean Taxas (Requisito para Machine Learning).
-4. Une los tres batchs rellenando con 0 las especies que no aparezcan en alguno de los batchs.
-5. Exporta el resultado final a analysis/03_classification/combined/otu_table.csv
-"""
 
 import os
 import glob
