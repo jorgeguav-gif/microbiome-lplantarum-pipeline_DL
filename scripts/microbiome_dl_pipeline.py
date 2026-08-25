@@ -424,7 +424,7 @@ class PredictorMultiHead(nn.Module):
         if hidden_dims is None:
             hidden_dims = [256, 128, 64]
 
-        # Red troncal compartida
+        # Shared backbone
         layers = []
         in_dim = n_taxa
         for h_dim in hidden_dims:
@@ -537,7 +537,7 @@ def ejecutar_proyecto_a(args):
         cv = StratifiedKFold(n_splits=cv_folds, shuffle=True, random_state=args.seed)
         n_splits = cv_folds
 
-    # Almacenar predicciones
+    # Store predictions
     pred_sexo_all = np.zeros(n_muestras, dtype=int)
     pred_trat_all = np.zeros(n_muestras, dtype=int)
     prob_sexo_all = np.zeros((n_muestras, n_clases_sexo))
@@ -1146,7 +1146,7 @@ def ejecutar_proyecto_b(args):
     ax.set_xticks(posiciones)
     ax.set_xticklabels(datos.clases_tratamiento)
     ax.axhline(y=0, color='grey', linestyle='--', alpha=0.5)
-    # EN
+    # IN
     ax.set_xlabel('Treatment')
     ax.set_ylabel('Dysbiosis Score (z-score)')
     ax.set_title('Dysbiosis Evaluation by Treatment\n(Based on VAE Reconstruction Error)')
@@ -1358,7 +1358,7 @@ def cargar_lecturas_y_taxonomia(reads_dir: str, taxonomy_ref: str,
                     if seq and len(seq) >= 100:
                         secuencias.append(seq)
                         # Asignar género (simplificado: asignación proporcional)
-                        # En producción, usar las asignaciones de EMU por read
+                        # In production, use EMU mappings by read
                         genero = np.random.choice(generos)
                         etiquetas.append(genero)
                         n_read += 1

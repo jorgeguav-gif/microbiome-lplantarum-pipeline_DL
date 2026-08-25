@@ -135,7 +135,7 @@ if dfs_lotes:
     muestras_validas = meta_df['sample_id'].dropna().tolist()
     df_final = df_final[df_final.index.isin(muestras_validas)]
     
-    # 8. Exportar
+    # 8. Export
     out_file = OUT_DIR / "otu_table.csv"
     # Guardamos con el índice llamado 'sample_id'
     df_final.index.name = "sample_id"

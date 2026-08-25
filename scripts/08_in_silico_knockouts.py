@@ -79,7 +79,7 @@ def main():
     baseline_scores = get_dysbiosis_scores(model, X_tensor)
     
     # 4. In Silico Knockouts
-    # Seleccionamos las Top 50 bacterias más abundantes/prevalentes para el análisis
+    # We select the Top 50 most abundant/prevalent bacteria for analysis
     print("[INFO] Preparando microcirugía computacional (Knockouts)...")
     mean_abundances = X_rel.mean(axis=0)
     top_indices = np.argsort(mean_abundances)[-50:]
