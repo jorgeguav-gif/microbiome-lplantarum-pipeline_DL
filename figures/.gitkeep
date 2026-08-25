@@ -1,0 +1,2 @@
+# Este archivo asegura que GitHub mantenga la carpeta 'figures' aunque esté vacía.
+# Las figuras se generarán localmente aquí cuando corras los scripts.
