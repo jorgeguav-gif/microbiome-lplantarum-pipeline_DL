@@ -31,9 +31,7 @@ import time
 from pathlib import Path
 from statistics import mean, median
 
-
 # =============================================================================
-# Funciones auxiliares
 # =============================================================================
 
 def calcular_qscore_medio(quality_string: str) -> float:
@@ -54,7 +52,6 @@ def calcular_qscore_medio(quality_string: str) -> float:
     total = sum(ord(c) - 33 for c in quality_string)
     return total / len(quality_string)
 
-
 def parse_fastq_gzip(filepath: str):
     """
     Generador que lee un archivo .fastq.gz y produce registros FASTQ uno a uno.
@@ -73,7 +70,6 @@ def parse_fastq_gzip(filepath: str):
     """
     with gzip.open(filepath, 'rt', encoding='utf-8') as f:
         while True:
-            # Leer las 4 líneas del registro FASTQ
             header = f.readline().rstrip('\n')
             if not header:
                 break  # Fin del archivo
@@ -81,14 +77,12 @@ def parse_fastq_gzip(filepath: str):
             separator = f.readline().rstrip('\n')
             quality = f.readline().rstrip('\n')
 
-            # Validación básica del formato
             if not header.startswith('@'):
                 print(f"  [ADVERTENCIA] Encabezado inesperado en {filepath}: {header[:50]}",
                       file=sys.stderr)
                 continue
 
             yield header, sequence, separator, quality
-
 
 def encontrar_directorio_fastq_pass(input_path: str) -> str:
     """
@@ -110,21 +104,16 @@ def encontrar_directorio_fastq_pass(input_path: str) -> str:
     """
     input_path = os.path.abspath(input_path)
 
-    # Caso 1: el propio directorio se llama fastq_pass
     if os.path.basename(input_path) == 'fastq_pass':
         return input_path
 
-    # Caso 2: hijo directo
     direct = os.path.join(input_path, 'fastq_pass')
     if os.path.isdir(direct):
         return direct
 
-    # Caso 3: búsqueda recursiva (hasta 3 niveles)
     for root, dirs, _ in os.walk(input_path):
-        # Limitar profundidad de búsqueda
         depth = root.replace(input_path, '').count(os.sep)
         if depth > 3:
-            # No descender más
             dirs.clear()
             continue
         if 'fastq_pass' in dirs:
@@ -134,7 +123,6 @@ def encontrar_directorio_fastq_pass(input_path: str) -> str:
         f"No se encontró el directorio 'fastq_pass' dentro de:\n  {input_path}\n"
         f"Verifique que la ruta apunte al directorio de la corrida de secuenciación."
     )
-
 
 def obtener_barcodes(fastq_pass_dir: str) -> list:
     """
@@ -155,7 +143,6 @@ def obtener_barcodes(fastq_pass_dir: str) -> list:
             barcodes.append(full_path)
     return barcodes
 
-
 def listar_fastq_gz(barcode_dir: str) -> list:
     """
     Lista todos los archivos .fastq.gz dentro de un directorio de barcode.
@@ -172,9 +159,7 @@ def listar_fastq_gz(barcode_dir: str) -> list:
             archivos.append(os.path.join(barcode_dir, entry))
     return archivos
 
-
 # =============================================================================
-# Función principal de procesamiento
 # =============================================================================
 
 def procesar_barcode(barcode_dir: str, output_dir: str,
@@ -208,17 +193,14 @@ def procesar_barcode(barcode_dir: str, output_dir: str,
             'mean_qscore': 0.0, 'median_qscore': 0.0
         }
 
-    # Contadores
     total_reads = 0
     passed_reads = 0
     failed_length = 0
     failed_quality = 0
 
-    # Listas para estadísticas de lecturas que PASARON el filtro
     passed_lengths = []
     passed_qscores = []
 
-    # Archivo de salida para lecturas filtradas
     output_file = os.path.join(output_dir, f"{barcode_name}_filtered.fastq.gz")
 
     with gzip.open(output_file, 'wt', encoding='utf-8') as out_fh:
@@ -228,25 +210,20 @@ def procesar_barcode(barcode_dir: str, output_dir: str,
                 read_len = len(sequence)
                 qscore = calcular_qscore_medio(quality)
 
-                # --- Filtro de longitud ---
                 if read_len < min_length or read_len > max_length:
                     failed_length += 1
                     continue
 
-                # --- Filtro de calidad ---
                 if qscore < min_quality:
                     failed_quality += 1
                     continue
 
-                # --- La lectura pasó ambos filtros ---
                 passed_reads += 1
                 passed_lengths.append(read_len)
                 passed_qscores.append(qscore)
 
-                # Escribir al archivo de salida
                 out_fh.write(f"{header}\n{sequence}\n{separator}\n{quality}\n")
 
-    # Calcular estadísticas
     stats = {
         'barcode': barcode_name,
         'total_reads': total_reads,
@@ -259,7 +236,6 @@ def procesar_barcode(barcode_dir: str, output_dir: str,
         'median_qscore': round(median(passed_qscores), 2) if passed_qscores else 0.0,
     }
 
-    # Porcentaje de lecturas que pasaron
     pct = (passed_reads / total_reads * 100) if total_reads > 0 else 0.0
 
     print(f"  {barcode_name}: {total_reads:,} total → {passed_reads:,} pasaron "
@@ -267,7 +243,6 @@ def procesar_barcode(barcode_dir: str, output_dir: str,
           f"{failed_quality:,} (calidad)")
 
     return stats
-
 
 def escribir_resumen_csv(stats_list: list, output_path: str):
     """
@@ -292,9 +267,7 @@ def escribir_resumen_csv(stats_list: list, output_path: str):
 
     print(f"\n✓ Resumen CSV guardado en: {output_path}")
 
-
 # =============================================================================
-# Punto de entrada — CLI
 # =============================================================================
 
 def crear_parser() -> argparse.ArgumentParser:
@@ -339,13 +312,11 @@ def crear_parser() -> argparse.ArgumentParser:
     )
     return parser
 
-
 def main():
     """Función principal: parsea argumentos, ejecuta el pipeline de preprocesamiento."""
     parser = crear_parser()
     args = parser.parse_args()
 
-    # --- Encabezado informativo ---
     print("=" * 72)
     print("  PREPROCESAMIENTO DE LECTURAS 16S rRNA — Oxford Nanopore")
     print("=" * 72)
@@ -355,7 +326,6 @@ def main():
     print(f"  Filtro de calidad     : Q-score medio ≥ {args.min_quality}")
     print("=" * 72)
 
-    # --- Localizar fastq_pass ---
     try:
         fastq_pass_dir = encontrar_directorio_fastq_pass(args.input)
     except FileNotFoundError as e:
@@ -364,7 +334,6 @@ def main():
 
     print(f"\n→ Directorio fastq_pass encontrado: {fastq_pass_dir}")
 
-    # --- Obtener lista de barcodes ---
     barcodes = obtener_barcodes(fastq_pass_dir)
     if not barcodes:
         print("[ERROR] No se encontraron directorios de barcode en fastq_pass/.",
@@ -375,12 +344,10 @@ def main():
     for bc in barcodes:
         print(f"    • {os.path.basename(bc)}")
 
-    # --- Crear directorio de salida ---
     filtered_dir = os.path.join(args.output, 'filtered_reads')
     os.makedirs(filtered_dir, exist_ok=True)
     print(f"\n→ Lecturas filtradas se guardarán en: {filtered_dir}")
 
-    # --- Procesar cada barcode ---
     print("\n" + "-" * 72)
     print("  Procesando barcodes...")
     print("-" * 72)
@@ -402,7 +369,6 @@ def main():
 
     elapsed = time.time() - inicio
 
-    # --- Resumen global ---
     total_all = sum(s['total_reads'] for s in all_stats)
     passed_all = sum(s['passed_reads'] for s in all_stats)
     failed_len_all = sum(s['failed_length'] for s in all_stats)
@@ -419,14 +385,12 @@ def main():
     print(f"  Tiempo de ejecución   : {elapsed:.1f} segundos")
     print("=" * 72)
 
-    # --- Guardar CSV ---
     csv_path = os.path.join(args.output, 'preprocessing_summary.csv')
     escribir_resumen_csv(all_stats, csv_path)
 
     print(f"\n✓ Preprocesamiento completado exitosamente.")
     print(f"  Archivos filtrados en : {filtered_dir}")
     print(f"  Resumen CSV en        : {csv_path}")
-
 
 if __name__ == '__main__':
     main()

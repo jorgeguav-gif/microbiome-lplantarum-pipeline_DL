@@ -23,7 +23,6 @@ def main():
 
     print(f"[INFO] Extrayendo secuencias de: {args.fastq}")
     
-    # Extraer todas las secuencias
     records = []
     with gzip.open(args.fastq, "rt") as handle:
         for record in SeqIO.parse(handle, "fastq"):
@@ -31,18 +30,15 @@ def main():
             
     print(f"[INFO] Se encontraron {len(records)} secuencias en total.")
     
-    # Muestrear al azar
     n_samples = min(args.n_seqs, len(records))
     sampled_records = random.sample(records, n_samples)
     print(f"[INFO] Se seleccionaron {n_samples} secuencias al azar para BLAST remoto.")
     
     results = []
     
-    # Run BLAST via web API (no need for local DB)
     for i, record in enumerate(sampled_records):
         print(f"[{i+1}/{n_samples}] BLASTing {record.id} (Longitud: {len(record.seq)} pb)...")
         try:
-            # qblast(programa, base de datos, secuencia)
             result_handle = NCBIWWW.qblast("blastn", "nt", record.seq, hitlist_size=1)
             blast_record = NCBIXML.read(result_handle)
             
@@ -72,7 +68,6 @@ def main():
         except Exception as e:
             print(f"  -> Error en BLAST: {e}")
             
-    # Guardar reporte
     df = pd.DataFrame(results)
     df.to_csv(args.output, index=False)
     print(f"\n[INFO] Análisis completado. Reporte guardado en: {args.output}")

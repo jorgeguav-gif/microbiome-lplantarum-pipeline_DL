@@ -5,7 +5,6 @@
 # @orcid: https://orcid.org/0000-0003-1630-954X
 # @github: jorgeguav-gif
 
-
 set -e
 
 echo "=========================================================="
@@ -17,7 +16,6 @@ echo "=========================================================="
 
 source ~/.bashrc
 conda activate nextflow_env
-
 
 if [ -z "$1" ]; then
     echo "Error: Debes especificar el lote. Ejemplo: sbatch 01b_epi2me_wf16s.sh Lote1"

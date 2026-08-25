@@ -6,7 +6,6 @@
 @github: jorgeguav-gif
 """
 
-# -*- coding: utf-8 -*-
 """
 microbiome_dl_pipeline.py
 Pipeline de Deep Learning para análisis del microbioma 16S
@@ -61,7 +60,6 @@ matplotlib.use('Agg')  # Backend sin GUI para HPC
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-# Configuración estilo Nature
 nature_colors = ['#E64B35', '#4DBBD5', '#00A087', '#3C5488', '#F39B7F', '#8491B4', '#91D1C2', '#DC0000']
 sns.set_palette(sns.color_palette(nature_colors))
 sns.set_context('paper', font_scale=1.2)
@@ -82,17 +80,14 @@ plt.rcParams.update({
 warnings.filterwarnings('ignore')
 
 # =============================================================================
-# CONFIGURACIÓN GLOBAL
 # =============================================================================
 
-# Configurar logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s | %(levelname)s | %(message)s',
     datefmt='%H:%M:%S'
 )
 logger = logging.getLogger(__name__)
-
 
 def configurar_reproducibilidad(seed: int = 42):
     """Fijar semillas para reproducibilidad completa."""
@@ -103,7 +98,6 @@ def configurar_reproducibilidad(seed: int = 42):
     torch.backends.cudnn.benchmark = False
     os.environ['PYTHONHASHSEED'] = str(seed)
     logger.info(f"Semilla de reproducibilidad fijada: {seed}")
-
 
 def detectar_dispositivo():
     """Detectar y configurar el dispositivo de cómputo (GPU o CPU)."""
@@ -117,16 +111,13 @@ def detectar_dispositivo():
         logger.info("GPU no disponible, usando CPU")
     return device
 
-
 def crear_directorios(*dirs):
     """Crear múltiples directorios si no existen."""
     for d in dirs:
         Path(d).mkdir(parents=True, exist_ok=True)
 
-
 def guardar_metricas(metricas: dict, filepath: str):
     """Guardar métricas en formato JSON."""
-    # Convertir tipos numpy a tipos nativos de Python
     def convert(obj):
         if isinstance(obj, (np.integer,)):
             return int(obj)
@@ -141,9 +132,7 @@ def guardar_metricas(metricas: dict, filepath: str):
         json.dump(metricas_clean, f, indent=2, ensure_ascii=False)
     logger.info(f"Métricas guardadas en: {filepath}")
 
-
 # =============================================================================
-# CARGA DE DATOS
 # =============================================================================
 
 class DatosMicrobioma:
@@ -168,13 +157,10 @@ class DatosMicrobioma:
         self.metadata = pd.read_csv(metadata_path, index_col=0)
         logger.info(f"  Dimensiones metadata: {self.metadata.shape}")
 
-        # Alinear muestras
         self._alinear_muestras()
 
-        # Identificar columnas
         self._identificar_columnas()
 
-        # Codificar variables categóricas
         self._codificar_variables()
 
     def _alinear_muestras(self):
@@ -191,7 +177,6 @@ class DatosMicrobioma:
         """Identificar columnas de tratamiento, sexo y lote en metadata."""
         cols = self.metadata.columns.str.lower()
 
-        # Tratamiento
         for patron in ['tratamiento', 'treatment', 'trat', 'group']:
             matches = [c for c, cl in zip(self.metadata.columns, cols) if patron in cl]
             if matches:
@@ -201,7 +186,6 @@ class DatosMicrobioma:
             self.col_tratamiento = self.metadata.columns[0]
         logger.info(f"  Columna tratamiento: '{self.col_tratamiento}'")
 
-        # Sexo
         for patron in ['sexo', 'sex', 'género', 'gender']:
             matches = [c for c, cl in zip(self.metadata.columns, cols) if patron in cl]
             if matches:
@@ -211,7 +195,6 @@ class DatosMicrobioma:
             self.col_sexo = self.metadata.columns[1] if len(self.metadata.columns) > 1 else None
         logger.info(f"  Columna sexo: '{self.col_sexo}'")
 
-        # Lote
         for patron in ['lote', 'lot', 'batch']:
             matches = [c for c, cl in zip(self.metadata.columns, cols) if patron in cl]
             if matches:
@@ -266,9 +249,7 @@ class DatosMicrobioma:
         tratado_mask = self.metadata[self.col_tratamiento] != 'Control'
         return np.where(tratado_mask)[0]
 
-
 # =============================================================================
-# DATASETS DE PYTORCH
 # =============================================================================
 
 class DatasetAbundancia(Dataset):
@@ -301,11 +282,9 @@ class DatasetAbundancia(Dataset):
     def __getitem__(self, idx):
         x = self.X[idx].clone()
 
-        # Aumento de datos: añadir ruido gaussiano
         if self.aumentar and self.training_mode:
             ruido = torch.randn_like(x) * self.sigma_ruido
             x = torch.clamp(x + ruido, min=0)  # Asegurar no negativos
-            # Re-normalizar
             suma = x.sum()
             if suma > 0:
                 x = x / suma
@@ -315,7 +294,6 @@ class DatasetAbundancia(Dataset):
     @property
     def training_mode(self):
         return self.aumentar
-
 
 class DatasetSecuencias(Dataset):
     """
@@ -338,13 +316,11 @@ class DatasetSecuencias(Dataset):
         self.max_len = max_len
         self.etiquetas = torch.LongTensor(etiquetas)
 
-        # Construir o usar vocabulario
         if vocab is None:
             self.vocab = self._construir_vocabulario(secuencias)
         else:
             self.vocab = vocab
 
-        # Tokenizar secuencias
         self.tokens = [self._tokenizar(seq) for seq in secuencias]
 
     def _construir_vocabulario(self, secuencias: list) -> dict:
@@ -357,7 +333,6 @@ class DatasetSecuencias(Dataset):
                 if all(c in 'ACGT' for c in kmer):
                     kmers[kmer] += 1
 
-        # Tokens especiales
         vocab = {'<PAD>': 0, '<UNK>': 1, '<CLS>': 2}
         for kmer, _ in kmers.most_common():
             vocab[kmer] = len(vocab)
@@ -375,7 +350,6 @@ class DatasetSecuencias(Dataset):
             token_id = self.vocab.get(kmer, self.vocab.get('<UNK>', 1))
             tokens.append(token_id)
 
-        # Truncar o pad
         if len(tokens) > self.max_len:
             tokens = tokens[:self.max_len]
         else:
@@ -389,9 +363,7 @@ class DatasetSecuencias(Dataset):
     def __getitem__(self, idx):
         return self.tokens[idx], self.etiquetas[idx]
 
-
 # =============================================================================
-# PROYECTO A: PREDICTOR DE FENOTIPO (MULTI-HEAD MLP)
 # =============================================================================
 
 class PredictorMultiHead(nn.Module):
@@ -424,7 +396,6 @@ class PredictorMultiHead(nn.Module):
         if hidden_dims is None:
             hidden_dims = [256, 128, 64]
 
-        # Shared backbone
         layers = []
         in_dim = n_taxa
         for h_dim in hidden_dims:
@@ -438,7 +409,6 @@ class PredictorMultiHead(nn.Module):
 
         self.troncal = nn.Sequential(*layers)
 
-        # Cabeza para clasificación de sexo
         self.cabeza_sexo = nn.Sequential(
             nn.Linear(hidden_dims[-1], 32),
             nn.GELU(),
@@ -446,7 +416,6 @@ class PredictorMultiHead(nn.Module):
             nn.Linear(32, n_clases_sexo)
         )
 
-        # Cabeza para clasificación de tratamiento
         self.cabeza_tratamiento = nn.Sequential(
             nn.Linear(hidden_dims[-1], 32),
             nn.GELU(),
@@ -485,13 +454,11 @@ class PredictorMultiHead(nn.Module):
         x = x.clone().requires_grad_(True)
         logits_sexo, logits_trat = self(x)
 
-        # Importancia como magnitud del gradiente respecto a ambas salidas
         loss = logits_sexo.sum() + logits_trat.sum()
         loss.backward()
 
         importancia = x.grad.abs().detach().cpu().numpy()
         return importancia
-
 
 def ejecutar_proyecto_a(args):
     """
@@ -506,7 +473,6 @@ def ejecutar_proyecto_a(args):
     device = detectar_dispositivo()
     crear_directorios(args.output_dir, args.models_dir, args.figures_dir)
 
-    # ─── Cargar datos ────────────────────────────────────────────────────
     datos = DatosMicrobioma(args.otu_table, args.metadata)
     X = datos.obtener_abundancias(normalizar=True)
     y_sexo = datos.sexo
@@ -519,11 +485,9 @@ def ejecutar_proyecto_a(args):
     logger.info(f"Datos: {n_muestras} muestras × {n_taxa} taxa")
     logger.info(f"Clases sexo: {n_clases_sexo} | Clases tratamiento: {n_clases_trat}")
 
-    # ─── Normalizar features ────────────────────────────────────────────
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X)
 
-    # ─── Validación cruzada ──────────────────────────────────────────────
     cv_folds = args.cv_folds
     usar_loo = (n_muestras < 30) or (cv_folds >= n_muestras)
 
@@ -533,17 +497,14 @@ def ejecutar_proyecto_a(args):
         n_splits = n_muestras
     else:
         logger.info(f"Usando {cv_folds}-fold Stratified CV")
-        # Estratificar por tratamiento (más clases → mejor estratificación)
         cv = StratifiedKFold(n_splits=cv_folds, shuffle=True, random_state=args.seed)
         n_splits = cv_folds
 
-    # Store predictions
     pred_sexo_all = np.zeros(n_muestras, dtype=int)
     pred_trat_all = np.zeros(n_muestras, dtype=int)
     prob_sexo_all = np.zeros((n_muestras, n_clases_sexo))
     prob_trat_all = np.zeros((n_muestras, n_clases_trat))
 
-    # Importancia acumulada de features
     importancia_total = np.zeros(n_taxa)
 
     historiales = []
@@ -552,13 +513,11 @@ def ejecutar_proyecto_a(args):
         if fold % max(1, n_splits // 10) == 0:
             logger.info(f"  Fold {fold + 1}/{n_splits}")
 
-        # Datos de entrenamiento y prueba
         X_train = X_scaled[train_idx]
         X_test = X_scaled[test_idx]
         y_sexo_train, y_sexo_test = y_sexo[train_idx], y_sexo[test_idx]
         y_trat_train, y_trat_test = y_trat[train_idx], y_trat[test_idx]
 
-        # Crear datasets con aumento de datos
         ds_train = DatasetAbundancia(X_train, y_sexo_train, y_trat_train,
                                      aumentar=True, sigma_ruido=0.02)
         ds_test = DatasetAbundancia(X_test, y_sexo_test, y_trat_test,
@@ -568,7 +527,6 @@ def ejecutar_proyecto_a(args):
                               drop_last=False)
         dl_test = DataLoader(ds_test, batch_size=len(test_idx), shuffle=False)
 
-        # Crear modelo
         modelo = PredictorMultiHead(
             n_taxa=n_taxa,
             n_clases_sexo=n_clases_sexo,
@@ -583,7 +541,6 @@ def ejecutar_proyecto_a(args):
             optimizer, T_max=args.epochs, eta_min=1e-6
         )
 
-        # Pesos para clases desbalanceadas
         peso_sexo = torch.FloatTensor(
             [1.0 / max(1, (y_sexo_train == c).sum()) for c in range(n_clases_sexo)]
         ).to(device)
@@ -594,7 +551,6 @@ def ejecutar_proyecto_a(args):
         criterion_sexo = nn.CrossEntropyLoss(weight=peso_sexo)
         criterion_trat = nn.CrossEntropyLoss(weight=peso_trat)
 
-        # ─── Entrenamiento ─────────────────────────────────────────────
         for epoch in range(args.epochs):
             modelo.train()
             for batch_x, batch_y_sexo, batch_y_trat in dl_train:
@@ -615,7 +571,6 @@ def ejecutar_proyecto_a(args):
 
             scheduler.step()
 
-        # ─── Evaluación ────────────────────────────────────────────────
         modelo.eval()
         with torch.no_grad():
             for batch_x, _, _ in dl_test:
@@ -627,15 +582,12 @@ def ejecutar_proyecto_a(args):
                 prob_sexo_all[test_idx] = F.softmax(logits_sexo, dim=1).cpu().numpy()
                 prob_trat_all[test_idx] = F.softmax(logits_trat, dim=1).cpu().numpy()
 
-        # Importancia de features (solo en el último fold con modelo completo)
         if fold == n_splits - 1:
             x_mean = torch.FloatTensor(X_scaled.mean(axis=0)).unsqueeze(0).to(device)
             importancia_total += modelo.obtener_importancia(x_mean).flatten()
 
-    # ─── Métricas finales ────────────────────────────────────────────────
     logger.info("\n  === RESULTADOS PROYECTO A ===")
 
-    # Sexo
     acc_sexo = accuracy_score(y_sexo, pred_sexo_all)
     f1_sexo = f1_score(y_sexo, pred_sexo_all, average='weighted')
     logger.info(f"  Sexo     - Accuracy: {acc_sexo:.3f} | F1: {f1_sexo:.3f}")
@@ -646,7 +598,6 @@ def ejecutar_proyecto_a(args):
         output_dict=True
     )
 
-    # Tratamiento
     acc_trat = accuracy_score(y_trat, pred_trat_all)
     f1_trat = f1_score(y_trat, pred_trat_all, average='weighted')
     logger.info(f"  Tratamiento - Accuracy: {acc_trat:.3f} | F1: {f1_trat:.3f}")
@@ -657,7 +608,6 @@ def ejecutar_proyecto_a(args):
         output_dict=True
     )
 
-    # Guardar métricas
     metricas = {
         'sexo': {
             'accuracy': acc_sexo,
@@ -676,10 +626,6 @@ def ejecutar_proyecto_a(args):
     }
     guardar_metricas(metricas, os.path.join(args.output_dir, 'metricas_proyecto_a.json'))
 
-    # ─── Figuras ─────────────────────────────────────────────────────────
-
-    # Matriz de confusión - Sexo
-    # English version
     fig, axes = plt.subplots(1, 2, figsize=(14, 5))
     cm_sexo = confusion_matrix(y_sexo, pred_sexo_all)
     sns.heatmap(cm_sexo, annot=True, fmt='d', cmap='Blues',
@@ -698,7 +644,6 @@ def ejecutar_proyecto_a(args):
     plt.savefig(os.path.join(args.figures_dir, 'proyecto_a_confusion_en.tiff'), dpi=300, format='tiff', pil_kwargs={'compression': 'tiff_lzw'})
     plt.close()
 
-    # Spanish version
     fig, axes = plt.subplots(1, 2, figsize=(14, 5))
     sns.heatmap(cm_sexo, annot=True, fmt='d', cmap='Blues',
                 xticklabels=datos.clases_sexo, yticklabels=datos.clases_sexo, ax=axes[0])
@@ -715,13 +660,11 @@ def ejecutar_proyecto_a(args):
     plt.savefig(os.path.join(args.figures_dir, 'proyecto_a_confusion_es.tiff'), dpi=300, format='tiff', pil_kwargs={'compression': 'tiff_lzw'})
     plt.close()
 
-    # Importancia de features (Top 20)
     if importancia_total.sum() > 0:
         taxa_nombres = datos.otu.columns.tolist()
         top_k = min(20, n_taxa)
         top_idx = np.argsort(importancia_total)[-top_k:][::-1]
 
-        # English
         fig, ax = plt.subplots(figsize=(10, 8))
         ax.barh(range(top_k), importancia_total[top_idx][::-1], color='steelblue')
         ax.set_yticks(range(top_k))
@@ -733,7 +676,6 @@ def ejecutar_proyecto_a(args):
         plt.savefig(os.path.join(args.figures_dir, 'proyecto_a_importancia_en.tiff'), dpi=300, format='tiff', pil_kwargs={'compression': 'tiff_lzw'})
         plt.close()
 
-        # Spanish
         fig, ax = plt.subplots(figsize=(10, 8))
         ax.barh(range(top_k), importancia_total[top_idx][::-1], color='steelblue')
         ax.set_yticks(range(top_k))
@@ -744,14 +686,12 @@ def ejecutar_proyecto_a(args):
         plt.savefig(os.path.join(args.figures_dir, 'proyecto_a_importancia_es.tiff'), dpi=300, format='tiff', pil_kwargs={'compression': 'tiff_lzw'})
         plt.close()
 
-        # Guardar importancia
         df_imp = pd.DataFrame({
             'Taxon': taxa_nombres,
             'Importancia': importancia_total
         }).sort_values('Importancia', ascending=False)
         df_imp.to_csv(os.path.join(args.output_dir, 'importancia_taxa.csv'), index=False)
 
-    # Guardar modelo final (entrenado con todos los datos)
     logger.info("  Entrenando modelo final con todos los datos...")
     modelo_final = PredictorMultiHead(
         n_taxa=n_taxa, n_clases_sexo=n_clases_sexo,
@@ -784,9 +724,7 @@ def ejecutar_proyecto_a(args):
     logger.info("  ✓ Proyecto A completado")
     return metricas
 
-
 # =============================================================================
-# PROYECTO B: VAE PARA EUBIOSIS
 # =============================================================================
 
 class VAEMicrobioma(nn.Module):
@@ -815,7 +753,6 @@ class VAEMicrobioma(nn.Module):
 
         self.latent_dim = latent_dim
 
-        # Encoder
         self.encoder = nn.Sequential(
             nn.Linear(n_taxa, hidden_dim),
             nn.BatchNorm1d(hidden_dim),
@@ -827,11 +764,9 @@ class VAEMicrobioma(nn.Module):
             nn.Dropout(dropout),
         )
 
-        # Parámetros del espacio latente
         self.fc_mu = nn.Linear(hidden_dim // 2, latent_dim)
         self.fc_logvar = nn.Linear(hidden_dim // 2, latent_dim)
 
-        # Decoder
         self.decoder = nn.Sequential(
             nn.Linear(latent_dim, hidden_dim // 2),
             nn.BatchNorm1d(hidden_dim // 2),
@@ -884,15 +819,12 @@ class VAEMicrobioma(nn.Module):
         Retorna:
             Pérdida total, pérdida de reconstrucción, pérdida KL
         """
-        # Pérdida de reconstrucción (BCE o MSE)
         recon_loss = F.mse_loss(x_recon, x, reduction='sum')
 
-        # Divergencia KL: -0.5 * Σ(1 + log(σ²) - μ² - σ²)
         kl_loss = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
 
         total_loss = recon_loss + beta * kl_loss
         return total_loss, recon_loss, kl_loss
-
 
 def ejecutar_proyecto_b(args):
     """
@@ -907,7 +839,6 @@ def ejecutar_proyecto_b(args):
     device = detectar_dispositivo()
     crear_directorios(args.output_dir, args.models_dir, args.figures_dir)
 
-    # ─── Cargar datos ────────────────────────────────────────────────────
     datos = DatosMicrobioma(args.otu_table, args.metadata)
     X = datos.obtener_abundancias(normalizar=True)
 
@@ -924,18 +855,15 @@ def ejecutar_proyecto_b(args):
     logger.info(f"Muestras control: {n_control} | Muestras tratadas: {n_tratados}")
     logger.info(f"Dimensión latente: {args.latent_dim}")
 
-    # ─── Normalizar usando SOLO datos de control ────────────────────────
     scaler = StandardScaler()
     X_control_scaled = scaler.fit_transform(X_control)
     X_tratados_scaled = scaler.transform(X_tratados)
     X_all_scaled = scaler.transform(X)
 
-    # ─── Dataset de entrenamiento (solo controles) ──────────────────────
     X_ctrl_tensor = torch.FloatTensor(X_control_scaled)
     ds_control = torch.utils.data.TensorDataset(X_ctrl_tensor)
     dl_control = DataLoader(ds_control, batch_size=args.batch_size, shuffle=True)
 
-    # ─── Crear y entrenar VAE ───────────────────────────────────────────
     modelo = VAEMicrobioma(
         n_taxa=n_taxa,
         hidden_dim=128,
@@ -948,7 +876,6 @@ def ejecutar_proyecto_b(args):
         optimizer, mode='min', factor=0.5, patience=20
     )
 
-    # Esquema de calentamiento para β
     historia_loss = []
 
     logger.info(f"Entrenando VAE por {args.epochs} epochs...")
@@ -959,7 +886,6 @@ def ejecutar_proyecto_b(args):
         epoch_recon = 0
         epoch_kl = 0
 
-        # β-VAE warmup: incrementar β gradualmente
         beta = min(1.0, epoch / (args.epochs * 0.3))
 
         for (batch_x,) in dl_control:
@@ -990,7 +916,6 @@ def ejecutar_proyecto_b(args):
                         f"KL: {epoch_kl / n_control:.4f} | "
                         f"β: {beta:.3f}")
 
-    # ─── Evaluar reconstrucción en todas las muestras ────────────────────
     logger.info("\n  Evaluando error de reconstrucción...")
     modelo.eval()
 
@@ -998,14 +923,11 @@ def ejecutar_proyecto_b(args):
         X_all_tensor = torch.FloatTensor(X_all_scaled).to(device)
         x_recon, mu_all, _ = modelo(X_all_tensor)
 
-        # Error de reconstrucción por muestra (MSE)
         errores_recon = F.mse_loss(x_recon, X_all_tensor, reduction='none')
         errores_por_muestra = errores_recon.sum(dim=1).cpu().numpy()
 
-        # Coordenadas latentes
         latentes = mu_all.cpu().numpy()
 
-    # ─── Crear dataframe de resultados ───────────────────────────────────
     df_eubiosis = pd.DataFrame({
         'Muestra': datos.metadata.index,
         'Tratamiento': datos.metadata[datos.col_tratamiento].values,
@@ -1013,18 +935,15 @@ def ejecutar_proyecto_b(args):
         'Error_Reconstruccion': errores_por_muestra,
     })
 
-    # Añadir coordenadas latentes
     for d in range(args.latent_dim):
         df_eubiosis[f'Latente_{d + 1}'] = latentes[:, d]
 
-    # Score de disbiosis (normalizado respecto a controles)
     media_ctrl = errores_por_muestra[idx_control].mean()
     std_ctrl = max(errores_por_muestra[idx_control].std(), 1e-8)
     df_eubiosis['Score_Disbiosis'] = (errores_por_muestra - media_ctrl) / std_ctrl
 
     df_eubiosis.to_csv(os.path.join(args.output_dir, 'eubiosis_scores.csv'), index=False)
 
-    # ─── Estadísticas por grupo ──────────────────────────────────────────
     logger.info("\n  Score de disbiosis por grupo:")
     resumen = df_eubiosis.groupby(['Tratamiento', 'Sexo'])['Score_Disbiosis'].agg(
         ['mean', 'std', 'count']
@@ -1033,7 +952,6 @@ def ejecutar_proyecto_b(args):
 
     resumen.to_csv(os.path.join(args.output_dir, 'disbiosis_resumen.csv'))
 
-    # ─── Métricas ────────────────────────────────────────────────────────
     metricas = {
         'error_recon_control_media': float(media_ctrl),
         'error_recon_control_std': float(std_ctrl),
@@ -1043,7 +961,6 @@ def ejecutar_proyecto_b(args):
         'loss_final': float(historia_loss[-1]),
     }
 
-    # Añadir scores por cepa
     for cepa in datos.clases_tratamiento:
         mask = df_eubiosis['Tratamiento'] == cepa
         metricas[f'disbiosis_{cepa}_media'] = float(
@@ -1055,10 +972,6 @@ def ejecutar_proyecto_b(args):
 
     guardar_metricas(metricas, os.path.join(args.output_dir, 'metricas_proyecto_b.json'))
 
-    # ─── Figuras ─────────────────────────────────────────────────────────
-
-    # 1. Curva de pérdida
-    # EN
     fig, ax = plt.subplots(figsize=(8, 5))
     ax.plot(historia_loss, color='steelblue', linewidth=1.5)
     ax.set_xlabel('Epoch')
@@ -1069,7 +982,6 @@ def ejecutar_proyecto_b(args):
     plt.savefig(os.path.join(args.figures_dir, 'proyecto_b_loss_en.tiff'), dpi=300, format='tiff', pil_kwargs={'compression': 'tiff_lzw'})
     plt.close()
 
-    # ES
     fig, ax = plt.subplots(figsize=(8, 5))
     ax.plot(historia_loss, color='steelblue', linewidth=1.5)
     ax.set_xlabel('Epoch')
@@ -1080,7 +992,6 @@ def ejecutar_proyecto_b(args):
     plt.savefig(os.path.join(args.figures_dir, 'proyecto_b_loss_es.tiff'), dpi=300, format='tiff', pil_kwargs={'compression': 'tiff_lzw'})
     plt.close()
 
-    # 2. Espacio latente 2D
     if args.latent_dim == 2:
         colores_trat = {
             'Control': '#4DAF4A', 'LM20': '#377EB8',
@@ -1103,7 +1014,6 @@ def ejecutar_proyecto_b(args):
                         label=f'{trat} ({sexo_val})'
                     )
 
-        # EN
         ax.set_xlabel('Latent Dimension 1')
         ax.set_ylabel('Latent Dimension 2')
         ax.set_title('VAE Latent Space\n(Trained with Controls)')
@@ -1111,7 +1021,6 @@ def ejecutar_proyecto_b(args):
         plt.tight_layout()
         plt.savefig(os.path.join(args.figures_dir, 'proyecto_b_latente_en.tiff'), dpi=300, format='tiff', pil_kwargs={'compression': 'tiff_lzw'}, bbox_inches='tight')
 
-        # ES
         ax.set_xlabel('Dimensión Latente 1')
         ax.set_ylabel('Dimensión Latente 2')
         ax.set_title('Espacio Latente del VAE\n(Entrenado con Controles)')
@@ -1119,7 +1028,6 @@ def ejecutar_proyecto_b(args):
         plt.savefig(os.path.join(args.figures_dir, 'proyecto_b_latente_es.tiff'), dpi=300, format='tiff', pil_kwargs={'compression': 'tiff_lzw'}, bbox_inches='tight')
         plt.close()
 
-    # 3. Distribución de scores de disbiosis
     fig, ax = plt.subplots(figsize=(10, 6))
     colores = ['#4DAF4A', '#377EB8', '#FF7F00', '#E41A1C']
     posiciones = []
@@ -1137,7 +1045,6 @@ def ejecutar_proyecto_b(args):
         patch.set_facecolor(color)
         patch.set_alpha(0.7)
 
-    # Añadir puntos individuales
     for i, (vals, trat) in enumerate(zip(datos_boxplot, datos.clases_tratamiento)):
         jitter = np.random.normal(0, 0.05, len(vals))
         ax.scatter(np.full_like(vals, i) + jitter, vals,
@@ -1146,14 +1053,12 @@ def ejecutar_proyecto_b(args):
     ax.set_xticks(posiciones)
     ax.set_xticklabels(datos.clases_tratamiento)
     ax.axhline(y=0, color='grey', linestyle='--', alpha=0.5)
-    # IN
     ax.set_xlabel('Treatment')
     ax.set_ylabel('Dysbiosis Score (z-score)')
     ax.set_title('Dysbiosis Evaluation by Treatment\n(Based on VAE Reconstruction Error)')
     plt.tight_layout()
     plt.savefig(os.path.join(args.figures_dir, 'proyecto_b_disbiosis_en.tiff'), dpi=300, format='tiff', pil_kwargs={'compression': 'tiff_lzw'})
 
-    # ES
     ax.set_xlabel('Tratamiento')
     ax.set_ylabel('Score de Disbiosis (z-score)')
     ax.set_title('Evaluación de Disbiosis por Tratamiento\n(Basado en Error de Reconstrucción del VAE)')
@@ -1161,7 +1066,6 @@ def ejecutar_proyecto_b(args):
     plt.savefig(os.path.join(args.figures_dir, 'proyecto_b_disbiosis_es.tiff'), dpi=300, format='tiff', pil_kwargs={'compression': 'tiff_lzw'})
     plt.close()
 
-    # Guardar modelo
     torch.save({
         'model_state_dict': modelo.state_dict(),
         'scaler_mean': scaler.mean_,
@@ -1175,9 +1079,7 @@ def ejecutar_proyecto_b(args):
     logger.info("  ✓ Proyecto B completado")
     return metricas
 
-
 # =============================================================================
-# PROYECTO C: TRANSFORMER PARA CLASIFICACIÓN 16S
 # =============================================================================
 
 class TransformerEncoder16S(nn.Module):
@@ -1210,13 +1112,10 @@ class TransformerEncoder16S(nn.Module):
 
         self.d_model = d_model
 
-        # Embedding de tokens
         self.embedding = nn.Embedding(vocab_size, d_model, padding_idx=0)
 
-        # Positional encoding (aprendido)
         self.pos_encoding = nn.Embedding(max_len, d_model)
 
-        # Transformer encoder
         encoder_layer = nn.TransformerEncoderLayer(
             d_model=d_model,
             nhead=nhead,
@@ -1230,7 +1129,6 @@ class TransformerEncoder16S(nn.Module):
             encoder_layer, num_layers=n_layers
         )
 
-        # Clasificador
         self.clasificador = nn.Sequential(
             nn.LayerNorm(d_model),
             nn.Linear(d_model, d_model // 2),
@@ -1251,28 +1149,21 @@ class TransformerEncoder16S(nn.Module):
         """
         batch_size, seq_len = x.shape
 
-        # Máscara de padding
         padding_mask = (x == 0)
 
-        # Embeddings
         tok_emb = self.embedding(x) * (self.d_model ** 0.5)
 
-        # Positional encoding
         positions = torch.arange(seq_len, device=x.device).unsqueeze(0).expand(batch_size, -1)
         pos_emb = self.pos_encoding(positions)
 
         emb = tok_emb + pos_emb
 
-        # Transformer encoder
         encoded = self.transformer(emb, src_key_padding_mask=padding_mask)
 
-        # Usar el token [CLS] (posición 0) para clasificación
         cls_output = encoded[:, 0, :]
 
-        # Clasificar
         logits = self.clasificador(cls_output)
         return logits
-
 
 def cargar_lecturas_y_taxonomia(reads_dir: str, taxonomy_ref: str,
                                  max_reads: int = 10000):
@@ -1299,7 +1190,6 @@ def cargar_lecturas_y_taxonomia(reads_dir: str, taxonomy_ref: str,
     reads_path = Path(reads_dir)
     tax_path = Path(taxonomy_ref)
 
-    # Buscar archivos FASTQ
     fastq_files = sorted(
         list(reads_path.glob('**/*.fastq.gz')) +
         list(reads_path.glob('**/*.fastq')) +
@@ -1308,23 +1198,19 @@ def cargar_lecturas_y_taxonomia(reads_dir: str, taxonomy_ref: str,
 
     if not fastq_files:
         logger.warning(f"No se encontraron archivos FASTQ en {reads_dir}")
-        # Generar datos sintéticos para demostración
         logger.info("Generando datos sintéticos de demostración...")
         return _generar_datos_sinteticos_transformer(max_reads)
 
-    # Cargar asignaciones taxonómicas de EMU
     tax_assignments = {}
     emu_files = sorted(tax_path.glob('**/emu_results*.tsv'))
 
     for emu_file in emu_files:
         try:
             df = pd.read_csv(emu_file, sep='\t')
-            # Extraer género de la columna taxonómica
             if 'genus' in df.columns:
                 for _, row in df.iterrows():
                     genus = str(row['genus']).strip()
                     if genus and genus != 'nan':
-                        # Usar como distribución de probabilidad para asignar
                         tax_assignments[genus] = tax_assignments.get(genus, 0) + 1
         except Exception as e:
             logger.warning(f"Error leyendo {emu_file}: {e}")
@@ -1333,7 +1219,6 @@ def cargar_lecturas_y_taxonomia(reads_dir: str, taxonomy_ref: str,
         logger.warning("No se pudieron cargar asignaciones taxonómicas")
         return _generar_datos_sinteticos_transformer(max_reads)
 
-    # Leer secuencias
     n_read = 0
     generos = list(tax_assignments.keys())
 
@@ -1347,7 +1232,6 @@ def cargar_lecturas_y_taxonomia(reads_dir: str, taxonomy_ref: str,
 
             with open_fn(fq_file, mode) as f:
                 while n_read < max_reads:
-                    # Leer un registro FASTQ (4 líneas)
                     header = f.readline().strip()
                     if not header:
                         break
@@ -1357,8 +1241,6 @@ def cargar_lecturas_y_taxonomia(reads_dir: str, taxonomy_ref: str,
 
                     if seq and len(seq) >= 100:
                         secuencias.append(seq)
-                        # Asignar género (simplificado: asignación proporcional)
-                        # In production, use EMU mappings by read
                         genero = np.random.choice(generos)
                         etiquetas.append(genero)
                         n_read += 1
@@ -1370,7 +1252,6 @@ def cargar_lecturas_y_taxonomia(reads_dir: str, taxonomy_ref: str,
     logger.info(f"  Géneros únicos: {len(set(etiquetas))}")
 
     return secuencias, etiquetas
-
 
 def _generar_datos_sinteticos_transformer(n_reads: int = 5000):
     """
@@ -1386,7 +1267,6 @@ def _generar_datos_sinteticos_transformer(n_reads: int = 5000):
         'Plantilactobacillus'
     ]
 
-    # Motivos característicos por género (simplificados)
     motivos = {
         'Lactobacillus': 'ATCGATCG',
         'Bifidobacterium': 'GCTAGCTA',
@@ -1405,10 +1285,8 @@ def _generar_datos_sinteticos_transformer(n_reads: int = 5000):
 
     for _ in range(n_reads):
         genero = np.random.choice(generos)
-        # Generar secuencia con motivo embebido
         largo = np.random.randint(800, 1500)
         seq = ''.join(np.random.choice(['A', 'C', 'G', 'T'], largo))
-        # Insertar motivo varias veces
         motivo = motivos[genero]
         n_inserciones = np.random.randint(3, 10)
         for _ in range(n_inserciones):
@@ -1419,7 +1297,6 @@ def _generar_datos_sinteticos_transformer(n_reads: int = 5000):
         etiquetas.append(genero)
 
     return secuencias, etiquetas
-
 
 def ejecutar_proyecto_c(args):
     """
@@ -1434,7 +1311,6 @@ def ejecutar_proyecto_c(args):
     device = detectar_dispositivo()
     crear_directorios(args.output_dir, args.models_dir, args.figures_dir)
 
-    # ─── Cargar datos ────────────────────────────────────────────────────
     reads_dir = getattr(args, 'reads_dir', None) or 'reads'
     taxonomy_ref = getattr(args, 'taxonomy_ref', None) or 'taxonomy'
 
@@ -1446,7 +1322,6 @@ def ejecutar_proyecto_c(args):
         logger.error("No se pudieron cargar secuencias. Abortando Proyecto C.")
         return {}
 
-    # ─── Codificar etiquetas ─────────────────────────────────────────────
     le_genero = LabelEncoder()
     y = le_genero.fit_transform(etiquetas)
     clases_genero = list(le_genero.classes_)
@@ -1455,7 +1330,6 @@ def ejecutar_proyecto_c(args):
     logger.info(f"Secuencias: {len(secuencias)} | Géneros: {n_clases}")
     logger.info(f"Tamaño k-mer: {args.kmer_size}")
 
-    # ─── Crear dataset ───────────────────────────────────────────────────
     dataset = DatasetSecuencias(
         secuencias, y,
         kmer_size=args.kmer_size,
@@ -1464,7 +1338,6 @@ def ejecutar_proyecto_c(args):
     vocab_size = len(dataset.vocab)
     logger.info(f"Vocabulario: {vocab_size} tokens")
 
-    # ─── Validación cruzada ──────────────────────────────────────────────
     cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=args.seed)
 
     todas_pred = np.zeros(len(y), dtype=int)
@@ -1484,7 +1357,6 @@ def ejecutar_proyecto_c(args):
         dl_val = DataLoader(ds_val, batch_size=args.batch_size, shuffle=False,
                             num_workers=0)
 
-        # Crear modelo
         modelo = TransformerEncoder16S(
             vocab_size=vocab_size,
             n_clases=n_clases,
@@ -1504,12 +1376,10 @@ def ejecutar_proyecto_c(args):
         )
         criterion = nn.CrossEntropyLoss()
 
-        # ─── Entrenamiento ───────────────────────────────────────────
         fold_loss_train = []
         fold_loss_val = []
 
         for epoch in range(args.epochs):
-            # Entrenamiento
             modelo.train()
             running_loss = 0
             n_batches = 0
@@ -1533,7 +1403,6 @@ def ejecutar_proyecto_c(args):
             avg_train_loss = running_loss / max(n_batches, 1)
             fold_loss_train.append(avg_train_loss)
 
-            # Validación
             modelo.eval()
             val_loss = 0
             val_batches = 0
@@ -1558,7 +1427,6 @@ def ejecutar_proyecto_c(args):
         historia_loss_train.append(fold_loss_train)
         historia_loss_val.append(fold_loss_val)
 
-        # ─── Predicción en validación ────────────────────────────────
         modelo.eval()
         with torch.no_grad():
             fold_preds = []
@@ -1576,7 +1444,6 @@ def ejecutar_proyecto_c(args):
             todas_pred[val_idx] = fold_preds
             todas_prob[val_idx] = fold_probs
 
-    # ─── Métricas finales ────────────────────────────────────────────────
     logger.info("\n  === RESULTADOS PROYECTO C ===")
 
     acc = accuracy_score(y, todas_pred)
@@ -1593,7 +1460,6 @@ def ejecutar_proyecto_c(args):
         output_dict=True
     )
 
-    # Guardar métricas
     metricas = {
         'accuracy': acc,
         'f1_weighted': f1,
@@ -1607,7 +1473,6 @@ def ejecutar_proyecto_c(args):
     }
     guardar_metricas(metricas, os.path.join(args.output_dir, 'metricas_proyecto_c.json'))
 
-    # Reporte detallado
     reporte_texto = classification_report(y, todas_pred, target_names=clases_genero)
     with open(os.path.join(args.output_dir, 'reporte_clasificacion.txt'), 'w') as f:
         f.write("REPORTE DE CLASIFICACIÓN TAXONÓMICA\n")
@@ -1615,9 +1480,6 @@ def ejecutar_proyecto_c(args):
         f.write(reporte_texto)
     logger.info(f"\n{reporte_texto}")
 
-    # ─── Figuras ─────────────────────────────────────────────────────────
-
-    # 1. Matriz de confusión
     cm = confusion_matrix(y, todas_pred)
     fig, ax = plt.subplots(figsize=(12, 10))
     sns.heatmap(cm, annot=True, fmt='d', cmap='YlOrRd',
@@ -1633,7 +1495,6 @@ def ejecutar_proyecto_c(args):
                 dpi=300, bbox_inches='tight')
     plt.close()
 
-    # 2. Curvas de pérdida (promedio de folds)
     fig, ax = plt.subplots(figsize=(8, 5))
     avg_train = np.mean(historia_loss_train, axis=0)
     avg_val = np.mean(historia_loss_val, axis=0)
@@ -1647,7 +1508,6 @@ def ejecutar_proyecto_c(args):
     plt.savefig(os.path.join(args.figures_dir, 'proyecto_c_loss.tiff'), dpi=300, format='tiff', pil_kwargs={'compression': 'tiff_lzw'})
     plt.close()
 
-    # 3. F1-score por género
     f1_por_genero = [reporte[g]['f1-score'] for g in clases_genero if g in reporte]
     fig, ax = plt.subplots(figsize=(10, 6))
     bars = ax.barh(range(len(clases_genero)), f1_por_genero, color='steelblue')
@@ -1657,7 +1517,6 @@ def ejecutar_proyecto_c(args):
     ax.set_title('F1-Score por Género')
     ax.set_xlim(0, 1)
 
-    # Añadir valores
     for bar, val in zip(bars, f1_por_genero):
         ax.text(bar.get_width() + 0.01, bar.get_y() + bar.get_height() / 2,
                 f'{val:.2f}', va='center', fontsize=8)
@@ -1666,7 +1525,6 @@ def ejecutar_proyecto_c(args):
     plt.savefig(os.path.join(args.figures_dir, 'proyecto_c_f1_genero.tiff'), dpi=300, format='tiff', pil_kwargs={'compression': 'tiff_lzw'})
     plt.close()
 
-    # Guardar modelo
     torch.save({
         'model_state_dict': modelo.state_dict(),
         'vocab': dataset.vocab,
@@ -1675,16 +1533,13 @@ def ejecutar_proyecto_c(args):
         'n_clases': n_clases,
     }, os.path.join(args.models_dir, 'transformer_16s.pt'))
 
-    # Guardar vocabulario
     with open(os.path.join(args.output_dir, 'vocabulario_kmers.json'), 'w') as f:
         json.dump(dataset.vocab, f)
 
     logger.info("  ✓ Proyecto C completado")
     return metricas
 
-
 # =============================================================================
-# CLI PRINCIPAL
 # =============================================================================
 
 def crear_parser():
@@ -1707,7 +1562,6 @@ Ejemplos:
 
     subparsers = parser.add_subparsers(dest='proyecto', help='Proyecto a ejecutar')
 
-    # ─── Argumentos comunes ──────────────────────────────────────────────
     parent = argparse.ArgumentParser(add_help=False)
     parent.add_argument('--output_dir', type=str, default='results',
                         help='Directorio de salida para resultados')
@@ -1724,7 +1578,6 @@ Ejemplos:
     parent.add_argument('--seed', type=int, default=42,
                         help='Semilla para reproducibilidad')
 
-    # ─── Proyecto A: Predictor ───────────────────────────────────────────
     p_predict = subparsers.add_parser('predict', parents=[parent],
                                        help='Predictor de fenotipo multi-cabeza')
     p_predict.add_argument('--otu_table', type=str, required=True,
@@ -1734,7 +1587,6 @@ Ejemplos:
     p_predict.add_argument('--cv_folds', type=int, default=8,
                            help='Número de folds para CV (8 recomendado con n=64)')
 
-    # ─── Proyecto B: VAE ─────────────────────────────────────────────────
     p_vae = subparsers.add_parser('vae', parents=[parent],
                                    help='VAE para evaluación de eubiosis')
     p_vae.add_argument('--otu_table', type=str, required=True,
@@ -1744,7 +1596,6 @@ Ejemplos:
     p_vae.add_argument('--latent_dim', type=int, default=2,
                        help='Dimensión del espacio latente')
 
-    # ─── Proyecto C: Transformer ─────────────────────────────────────────
     p_transformer = subparsers.add_parser('transformer', parents=[parent],
                                            help='Transformer para clasificación 16S')
     p_transformer.add_argument('--reads_dir', type=str, required=True,
@@ -1756,7 +1607,6 @@ Ejemplos:
 
     return parser
 
-
 def main():
     """Punto de entrada principal del pipeline."""
     parser = crear_parser()
@@ -1766,10 +1616,8 @@ def main():
         parser.print_help()
         sys.exit(1)
 
-    # Configuración global
     configurar_reproducibilidad(args.seed)
 
-    # Configurar memoria CUDA
     if 'PYTORCH_CUDA_ALLOC_CONF' not in os.environ:
         os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
 
@@ -1809,7 +1657,6 @@ def main():
         import traceback
         traceback.print_exc()
         sys.exit(1)
-
 
 if __name__ == '__main__':
     main()

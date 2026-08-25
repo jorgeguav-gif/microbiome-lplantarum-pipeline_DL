@@ -15,7 +15,6 @@ import seaborn as sns
 from matplotlib.colors import LinearSegmentedColormap
 
 # =============================================================================
-# CONFIGURACIÓN ESTILO "NATURE" (Nature Publishing Group)
 # =============================================================================
 nature_colors = [
     '#E64B35', '#4DBBD5', '#00A087', '#3C5488', '#F39B7F', 
@@ -56,7 +55,6 @@ def clean_tax_name(tax_string):
     return tax_string
 
 def main():
-    # Detectar el directorio base dinámicamente donde sea que esté el script
     script_dir = os.path.dirname(os.path.abspath(__file__))
     base_dir = script_dir
 
@@ -67,21 +65,16 @@ def main():
     os.makedirs(out_dir, exist_ok=True)
 
     print("[INFO] Cargando tabla maestra de especies (OTU table) y metadatos...")
-    # Cargar OTU y transponer para que las especies sean el índice (filas) y muestras las columnas
     otu = pd.read_csv(otu_path, index_col=0).T
     
-    # Limpiar los nombres de las especies en el índice
     otu.index = [clean_tax_name(idx) for idx in otu.index]
     
-    # Cargar Metadatos
     meta = pd.read_csv(meta_path, index_col='sample_id')
     
-    # Alinear muestras
     muestras_comunes = otu.columns.intersection(meta.index)
     otu = otu[muestras_comunes]
     meta = meta.loc[muestras_comunes]
     
-    # Remover "Unclassified" antes de calcular abundancia relativa
     if 'Unclassified' in otu.index:
         print("[INFO] Eliminando grupo 'Unclassified' del análisis...")
         otu = otu.drop('Unclassified')
@@ -89,20 +82,16 @@ def main():
     print("[INFO] Convirtiendo a abundancias relativas (solo especies conocidas)...")
     otu_rel = otu.div(otu.sum(axis=0), axis=1) * 100  # Porcentaje
 
-    # Seleccionar las 15 especies más abundantes en todo el experimento
     top_n = 15
     top_species = otu_rel.mean(axis=1).nlargest(top_n).index
     
-    # Agrupar el resto en "Others"
     otu_top = otu_rel.loc[top_species].copy()
     otu_top.loc['Others'] = 100 - otu_top.sum(axis=0)
 
-    # Añadir metadatos para promediar por Tratamiento
     df_plot = otu_top.T.join(meta[['tratamiento']])
     df_grouped = df_plot.groupby('tratamiento').mean()
 
     # =========================================================================
-    # EXPORTAR LA COMPOSICIÓN DE "OTHERS"
     # =========================================================================
     print("[INFO] Exportando la composición exacta del grupo 'Others'...")
     others_species = otu_rel.index[~otu_rel.index.isin(top_species)]
@@ -111,17 +100,14 @@ def main():
     df_others.to_csv(os.path.join(out_dir, "others_composition.csv"))
 
     # =========================================================================
-    # 1. STACKED BAR PLOT (ESTILO NATURE)
     # =========================================================================
     print("[INFO] Generando Stacked Bar Plot (Nature Style)...")
     fig, ax = plt.subplots(figsize=(6, 5))
     
-    # Iterar para apilar las barras
     bottom = np.zeros(len(df_grouped))
     for i, species in enumerate(df_grouped.columns):
         color = nature_colors[i % len(nature_colors)] if species != 'Others' else '#D3D3D3'
         
-        # Poner los nombres de especies en cursiva usando math text, excepto "Others" y "Unclassified"
         label_sp = species
         if species not in ['Others', 'Unclassified']:
             label_sp = f"$\\mathit{{{species.replace('_', ' ')}وة}}$".replace('وة', '')
@@ -129,7 +115,6 @@ def main():
         ax.bar(df_grouped.index, df_grouped[species], bottom=bottom, label=label_sp, color=color, width=0.7)
         bottom += df_grouped[species]
 
-    # Quitar bordes superior y derecho (Típico en Nature)
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
     ax.spines['left'].set_linewidth(0.8)
@@ -138,31 +123,25 @@ def main():
     ax.set_ylabel("Relative Abundance (%)", fontweight='bold')
     ax.set_xlabel("")
     
-    # Leyenda a la derecha
     handles, labels = ax.get_legend_handles_labels()
     ax.legend(reversed(handles), reversed(labels), loc='center left', bbox_to_anchor=(1.05, 0.5), frameon=False)
     
     save_nature_tiff(fig, os.path.join(out_dir, "species_abundance_bars_en.tiff"))
     
-    # Versión Español
     ax.set_ylabel("Abundancia Relativa (%)", fontweight='bold')
     save_nature_tiff(fig, os.path.join(out_dir, "species_abundance_bars_es.tiff"))
     plt.close(fig)
 
     # =========================================================================
-    # 2. HEATMAP CLUSTERIZADO (ESTILO NATURE)
     # =========================================================================
     print("[INFO] Generando Heatmap de Especies...")
     
-    # Tomar top 20 para el heatmap directamente de la matriz completa otu_rel
     top_20 = otu_rel.mean(axis=1).nlargest(20).index
     df_heat_full = otu_rel.loc[top_20].T.join(meta[['tratamiento']])
     df_heat = df_heat_full.groupby('tratamiento').mean().T
     
-    # Z-score por fila para resaltar diferencias relativas
     df_heat_z = df_heat.apply(lambda x: (x - x.mean()) / x.std(), axis=1)
     
-    # Nombres en cursiva
     italic_idx = []
     for sp in df_heat_z.index:
         if sp not in ['Others', 'Unclassified']:
@@ -171,7 +150,6 @@ def main():
             italic_idx.append(sp)
     df_heat_z.index = italic_idx
 
-    # Colormap Nature clásico para heatmaps (Azul - Blanco - Rojo)
     cmap_npg = LinearSegmentedColormap.from_list("NPG_heat", ["#3C5488", "white", "#E64B35"])
     
     fig = plt.figure(figsize=(7, 6))
@@ -192,7 +170,6 @@ def main():
     
     save_nature_tiff(g.fig, os.path.join(out_dir, "species_heatmap_en.tiff"))
     
-    # Español
     g.cax.set_ylabel('Z-score (Abundancia)')
     g.ax_heatmap.set_xlabel("Tratamiento")
     save_nature_tiff(g.fig, os.path.join(out_dir, "species_heatmap_es.tiff"))

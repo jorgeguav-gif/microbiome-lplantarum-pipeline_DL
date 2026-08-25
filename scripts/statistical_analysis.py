@@ -14,9 +14,6 @@ import seaborn as sns
 from scipy.stats import kruskal
 from sklearn.decomposition import PCA
 
-# -------------------------------------------------------------------------
-# DIVERSITY INDICES
-# -------------------------------------------------------------------------
 def shannon_index(counts):
     p = counts / counts.sum()
     p = p[p > 0]
@@ -60,7 +57,6 @@ def main():
     parser.add_argument("--figures_dir", required=True)
     args = parser.parse_args()
 
-    # Create directories if they don't exist
     os.makedirs(args.output_dir, exist_ok=True)
     os.makedirs(args.figures_dir, exist_ok=True)
 
@@ -72,7 +68,6 @@ def main():
     otu = otu.loc[muestras_comunes]
     meta = meta.loc[muestras_comunes]
 
-    # 1. ALPHA DIVERSITY
     print("[INFO] Calculando Diversidad Alfa...")
     alpha_div = pd.DataFrame(index=otu.index)
     alpha_div['Shannon'] = otu.apply(shannon_index, axis=1)
@@ -91,7 +86,6 @@ def main():
     ]
 
     for metric, title_en, title_es in metrics:
-        # Without Sex
         fig = plt.figure(figsize=(8, 6))
         sns.boxplot(data=df_alpha, x='tratamiento', y=metric, color='lightblue')
         plt.title(title_en)
@@ -105,7 +99,6 @@ def main():
         save_tiff(fig, os.path.join(args.figures_dir, f"alpha_{metric.lower()}_es.tiff"))
         plt.close(fig)
 
-        # With Sex
         fig = plt.figure(figsize=(10, 6))
         sns.boxplot(data=df_alpha, x='tratamiento', y=metric, hue='sexo')
         plt.title(f"{title_en} by Sex")
@@ -121,8 +114,6 @@ def main():
         save_tiff(fig, os.path.join(args.figures_dir, f"alpha_{metric.lower()}_sex_es.tiff"))
         plt.close(fig)
 
-
-    # 2. BETA DIVERSITY (CLR + Aitchison PCA)
     print("[INFO] Aplicando transformación CLR (Aitchison)...")
     otu_clr = clr_transform(otu, pseudocount=0.5)
     
@@ -133,7 +124,6 @@ def main():
     df_beta = pd.DataFrame(coords, columns=['PC1', 'PC2'], index=otu.index).join(meta)
     df_beta.to_csv(os.path.join(args.output_dir, "beta_diversity_aitchison.csv"))
     
-    # Treatment PCA
     fig = plt.figure(figsize=(10, 8))
     sns.scatterplot(data=df_beta, x='PC1', y='PC2', hue='tratamiento', style='sexo', s=100)
     plt.title(f"Aitchison PCA by Treatment\nPC1 ({var_exp[0]:.1f}%) - PC2 ({var_exp[1]:.1f}%)")
@@ -145,7 +135,6 @@ def main():
     save_tiff(fig, os.path.join(args.figures_dir, "beta_aitchison_tratamiento_es.tiff"))
     plt.close(fig)
 
-    # Lote PCA
     fig = plt.figure(figsize=(10, 8))
     sns.scatterplot(data=df_beta, x='PC1', y='PC2', hue='lote', s=100, palette='Set2')
     plt.title(f"Batch Effect Evaluation (Aitchison PCA)\nPC1 ({var_exp[0]:.1f}%) - PC2 ({var_exp[1]:.1f}%)")
@@ -157,7 +146,6 @@ def main():
     save_tiff(fig, os.path.join(args.figures_dir, "beta_aitchison_lote_es.tiff"))
     plt.close(fig)
 
-    # --- BATCH EFFECT CORRECTION ---
     print("[INFO] Corrigiendo efecto de lote (Mean-centering en CLR)...")
     otu_clr_corrected = otu_clr.copy()
     global_means = otu_clr.mean(axis=0)
@@ -173,7 +161,6 @@ def main():
     df_beta_corr = pd.DataFrame(coords_corr, columns=['PC1', 'PC2'], index=otu.index).join(meta)
     df_beta_corr.to_csv(os.path.join(args.output_dir, "beta_diversity_aitchison_corrected.csv"))
     
-    # Corrected Lote PCA
     fig = plt.figure(figsize=(10, 8))
     sns.scatterplot(data=df_beta_corr, x='PC1', y='PC2', hue='lote', s=100, palette='Set2')
     plt.title(f"Batch Effect Corrected (Aitchison PCA)\nPC1 ({var_exp_corr[0]:.1f}%) - PC2 ({var_exp_corr[1]:.1f}%)")
@@ -185,7 +172,6 @@ def main():
     save_tiff(fig, os.path.join(args.figures_dir, "beta_aitchison_lote_corrected_es.tiff"))
     plt.close(fig)
 
-    # Corrected Treatment PCA
     fig = plt.figure(figsize=(10, 8))
     sns.scatterplot(data=df_beta_corr, x='PC1', y='PC2', hue='tratamiento', style='sexo', s=100)
     plt.title(f"Aitchison PCA by Treatment (Batch-Corrected)\nPC1 ({var_exp_corr[0]:.1f}%) - PC2 ({var_exp_corr[1]:.1f}%)")
@@ -197,10 +183,8 @@ def main():
     save_tiff(fig, os.path.join(args.figures_dir, "beta_aitchison_tratamiento_corrected_es.tiff"))
     plt.close(fig)
 
-    # Usar datos corregidos para análisis diferencial
     otu_clr = otu_clr_corrected
 
-    # 3. DIFFERENTIAL ANALYSIS (Kruskal-Wallis CLR)
     print("[INFO] Realizando análisis diferencial top 20 taxa...")
     otu_rel = otu.div(otu.sum(axis=1), axis=0) 
     top_taxa = otu_rel.mean().nlargest(20).index

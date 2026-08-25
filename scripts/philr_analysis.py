@@ -5,7 +5,6 @@
 @github: jorgeguav-gif
 """
 
-# -*- coding: utf-8 -*-
 import os
 import argparse
 import pandas as pd
@@ -333,8 +332,6 @@ def main():
     common_taxa = list(set(otu.columns).intersection(set([t.name for t in tree.get_terminals()])))
     otu = otu[common_taxa]
     # =========================================================================
-    # Metodología: Imputación Bayesiana Multiplicativa para Ceros
-    # (Adaptado escalarmente para evitar valores negativos en muestras con pocos reads)
     # =========================================================================
     print("Aplicando imputación multiplicativa para manejo de ceros...")
     otu_pseudo = otu.copy().astype(float)
@@ -342,8 +339,6 @@ def main():
         zeros = (row == 0).sum()
         if zeros > 0:
             tot = row.sum()
-            # Ensure delta is small enough that we don't get negative values
-            # Using 1/N^2 approach or a capped delta
             delta = min(0.5, (0.05 * tot) / zeros) if tot > 0 else 0.5
             
             zero_mask = row == 0
@@ -352,7 +347,6 @@ def main():
             if tot > 0:
                 otu_pseudo.loc[idx, non_zero_mask] = row[non_zero_mask] * (1.0 - (zeros * delta) / tot)
     
-    # Convertir a abundancias relativas
     otu_rel = otu_pseudo.div(otu_pseudo.sum(axis=1), axis=0)
 
     print("Calculando Balances Filogenéticos Evolutivos (PhILR)...")

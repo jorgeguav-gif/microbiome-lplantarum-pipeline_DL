@@ -12,13 +12,11 @@ file_path = r'C:\Users\Lenovo\Documents\seq\Seq_Jorge\analysis\05_deep_learning\
 with open(file_path, 'r', encoding='utf-8') as f:
     content = f.read()
 
-# 1. Configuración global de Nature y Matplotlib
 nature_setup = """import matplotlib
 matplotlib.use('Agg')  # Backend sin GUI para HPC
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-# Configuración estilo Nature
 nature_colors = ['#E64B35', '#4DBBD5', '#00A087', '#3C5488', '#F39B7F', '#8491B4', '#91D1C2', '#DC0000']
 sns.set_palette(sns.color_palette(nature_colors))
 sns.set_context('paper', font_scale=1.2)
@@ -43,7 +41,6 @@ content = re.sub(
     flags=re.DOTALL
 )
 
-# 2. Traducciones al Inglés Británico
 replacements = {
     'Predicción de Sexo': 'Sex Prediction',
     'Predicción de Tratamiento': 'Treatment Prediction',
@@ -64,7 +61,6 @@ replacements = {
 for es, en in replacements.items():
     content = content.replace(es, en)
 
-# 3. Guardar como TIFF con LZW compresión
 content = re.sub(
     r'plt\.savefig\((.*?), dpi=300\)',
     r"plt.savefig(\1, dpi=300, format='tiff', pil_kwargs={'compression': 'tiff_lzw'})",
@@ -72,7 +68,6 @@ content = re.sub(
 )
 content = content.replace('.png', '.tiff')
 
-# 4. Convertir las etiquetas del eje Y (taxa) en formato cursiva (italics)
 # Expresión original: ax.set_yticklabels([taxa_nombres[i] for i in top_idx][::-1], fontsize=8)
 # Nueva expresión: ax.set_yticklabels([f"$\mathit{{{taxa_nombres[i].replace('_', ' ')}}}$" for i in top_idx][::-1], fontsize=8)
 

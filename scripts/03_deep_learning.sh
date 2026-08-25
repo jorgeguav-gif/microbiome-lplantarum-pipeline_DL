@@ -5,8 +5,6 @@
 # @orcid: https://orcid.org/0000-0003-1630-954X
 # @github: jorgeguav-gif
 
-
-
 set -e
 
 echo "=================================================================="
@@ -159,7 +157,6 @@ python "${DL_SCRIPT}" vae \
     --seed 42
 
 echo "  Fin Proyecto B: $(date '+%H:%M:%S')"
-
 
 echo ""
 echo ">>> [6/6] Verificando results generados..."

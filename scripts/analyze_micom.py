@@ -27,7 +27,6 @@ try:
     
     growth = growth[growth['compartments'] != 'm']
 
-    
     print("\n--- RESUMEN DE TABLA DE TASAS DE CRECIMIENTO ---")
     print(growth.head())
     

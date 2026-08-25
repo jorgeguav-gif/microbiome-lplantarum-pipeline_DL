@@ -18,7 +18,6 @@ import seaborn as sns
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import StratifiedKFold
 
-# Estilo Nature
 sns.set_style('ticks')
 plt.rcParams.update({'font.family': 'sans-serif', 'font.sans-serif': ['Arial'], 'savefig.dpi': 300})
 
@@ -29,7 +28,6 @@ def clean_tax_name(tax_string):
     return tax_string
 
 # =============================================================================
-# RED NEURONAL INFORMADA BIOLÓGICAMENTE (BINN)
 # =============================================================================
 class MetabolicBINN(nn.Module):
     def __init__(self, pathway_matrix, n_classes=2):
@@ -39,12 +37,10 @@ class MetabolicBINN(nn.Module):
         super().__init__()
         self.n_pathways, self.n_species = pathway_matrix.shape
         
-        # CAPA 1: Transformación Especies -> Vías Metabólicas (Pesos CONGELADOS)
         self.bio_layer = nn.Linear(self.n_species, self.n_pathways, bias=False)
         self.bio_layer.weight.data = pathway_matrix
         self.bio_layer.weight.requires_grad = False # ¡Priors Biológicos Congelados!
         
-        # CAPA 2: Interacciones no lineales metabólicas -> Fenotipo
         self.deep_layers = nn.Sequential(
             nn.BatchNorm1d(self.n_pathways),
             nn.GELU(),
@@ -55,7 +51,6 @@ class MetabolicBINN(nn.Module):
         )
         
     def forward(self, x):
-        # x shape: (batch, n_species)
         metabolic_state = self.bio_layer(x)
         logits = self.deep_layers(metabolic_state)
         return logits, metabolic_state
@@ -81,7 +76,6 @@ def generar_matriz_biologica(full_taxonomies):
         tax_lower = str(tax).lower()
         
         # ==========================================
-        # REGLAS A NIVEL FILO (Cobertura Total)
         # ==========================================
         if "firmicutes" in tax_lower or "bacillota" in tax_lower:
             matrix[1, j] = 1.0 # Acetate production (casi ubicuo)
@@ -108,7 +102,6 @@ def generar_matriz_biologica(full_taxonomies):
             matrix[6, j] = 1.0 # Mucin
 
         # ==========================================
-        # REGLAS A NIVEL GÉNERO (Específicas)
         # ==========================================
         if "lactobacillus" in tax_lower or "enterococcus" in tax_lower:
             matrix[3, j] = 1.0 # Lactate
@@ -138,7 +131,6 @@ def generar_matriz_biologica(full_taxonomies):
         if "desulfovibrio" in tax_lower or "bilophila" in tax_lower:
             matrix[12, j] = 1.0 # H2S
             
-        # Rescate para bacterias huérfanas extremas (garantiza metabolismo basal)
         if matrix[:, j].sum() == 0:
             np.random.seed(hash(tax_lower) % 10000)
             idx = np.random.choice(range(len(pathways)), 3, replace=False)
@@ -154,7 +146,6 @@ def main():
     out_dir = os.path.join(project_dir, "05_deep_learning", "figures")
     os.makedirs(out_dir, exist_ok=True)
     
-    # 1. Cargar Datos
     print("[INFO] Cargando datos...")
     # El archivo original tiene Filas=Muestras, Columnas=Especies
     # Usamos .T para pasarlo a Filas=Especies, Columnas=Muestras
@@ -171,10 +162,8 @@ def main():
     comunes = otu.columns.intersection(meta.index)
     X_df = otu[comunes].T # Ahora sí transponemos: Filas: Muestras, Columnas: Especies
     
-    # Transformar Control vs Probiótico
     y_labels = meta.loc[comunes, 'tratamiento'].apply(lambda x: 0 if x == 'Control' else 1).values
     
-    # Normalizar a abundancia relativa y luego Z-score
     X_rel = X_df.div(X_df.sum(axis=1), axis=0).values
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X_rel)
@@ -182,7 +171,6 @@ def main():
     X_tensor = torch.FloatTensor(X_scaled)
     y_tensor = torch.LongTensor(y_labels)
     
-    # 2. Construir Matriz Biológica y BINN
     print("[INFO] Construyendo priors biológicos...")
     pathway_matrix, pathways_names = generar_matriz_biologica(full_taxonomies)
     
@@ -190,7 +178,6 @@ def main():
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.AdamW(filter(lambda p: p.requires_grad, model.parameters()), lr=0.01)
     
-    # 3. Entrenamiento rápido (full dataset proof of concept)
     print("[INFO] Entrenando BINN...")
     model.train()
     for epoch in range(150):
@@ -200,23 +187,18 @@ def main():
         loss.backward()
         optimizer.step()
         
-    # 4. Extraer Importancia de las Vías Metabólicas (Gradients)
     print("[INFO] Extrayendo importancia funcional (SHAP proxy)...")
     model.eval()
     X_tensor.requires_grad_(True)
     logits, metabolic_state = model(X_tensor)
     
-    # Magnitud del gradiente respecto a los estados metabólicos latentes
     loss = logits.sum()
     loss.backward()
     
-    # El estado metabólico es (batch, n_pathways). Su gradiente no está directamente disponible,
-    # calculamos usando la primera capa entrenable
     with torch.no_grad():
         w = model.deep_layers[3].weight # Los pesos lineales que conectan los pathways al fenotipo
         pathway_importance = w.abs().sum(dim=0).numpy()
         
-    # Guardar gráfico
     fig, ax = plt.subplots(figsize=(8, 5))
     idx_sort = np.argsort(pathway_importance)
     ax.barh(np.array(pathways_names)[idx_sort], pathway_importance[idx_sort], color='#E64B35')
@@ -229,18 +211,14 @@ def main():
     fig.savefig(os.path.join(out_dir, "binn_metabolic_importance.svg"), format='svg', bbox_inches='tight')
     plt.close()
     
-    # 5. Generar Heatmap de Activación de Vías Metabólicas por Tratamiento
     print("[INFO] Generando Heatmap de Activaciones Metabólicas por Tratamiento...")
     metabolic_act_df = pd.DataFrame(metabolic_state.detach().numpy(), index=X_df.index, columns=pathways_names)
     
-    # Filtrar solo las vías más importantes para que el heatmap sea legible (Top 15)
     top_pathways = np.array(pathways_names)[idx_sort[-15:]]
     metabolic_act_top = metabolic_act_df[top_pathways].copy()
     
-    # Unir con metadata
     metabolic_act_top['Tratamiento'] = meta.loc[metabolic_act_top.index, 'tratamiento']
     
-    # Promediar por Tratamiento
     metabolic_mean = metabolic_act_top.groupby('Tratamiento').mean()
     
     plt.figure(figsize=(12, 8))

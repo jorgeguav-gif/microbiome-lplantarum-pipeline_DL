@@ -5,7 +5,6 @@
 # @orcid: https://orcid.org/0000-0003-1630-954X
 # @github: jorgeguav-gif
 
-
 set -e
 source ~/.bashrc
 

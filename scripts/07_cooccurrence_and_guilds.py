@@ -22,7 +22,6 @@ import torch.nn as nn
 import torch.optim as optim
 
 # ==========================================
-# CONFIGURACIÓN ESTÉTICA (NATURE STYLE)
 # ==========================================
 sns.set_style('ticks')
 plt.rcParams.update({'font.family': 'sans-serif', 'savefig.dpi': 300, 'pdf.fonttype': 42})
@@ -51,7 +50,6 @@ def fdr_bh(pvals):
     return out_fdr
 
 # ==========================================
-# 1. ENFOQUE TRADICIONAL: RED DE COOCURRENCIA CLR
 # ==========================================
 def build_cooccurrence_network(clr_df, out_dir):
     print("\n[INFO] Construyendo Red de Coocurrencia Ecológica (Tradicional)...")
@@ -59,7 +57,6 @@ def build_cooccurrence_network(clr_df, out_dir):
     taxa = clr_df.columns.tolist()
     n_taxa = len(taxa)
     
-    # Matrices de correlación y p-valores
     corr_mat = np.zeros((n_taxa, n_taxa))
     pval_mat = np.zeros((n_taxa, n_taxa))
     
@@ -76,23 +73,19 @@ def build_cooccurrence_network(clr_df, out_dir):
                 pval_mat[i, j] = p
                 pval_mat[j, i] = p
                 
-    # Extraer p-valores del triángulo superior para corrección FDR
     upper_tri_idx = np.triu_indices(n_taxa, k=1)
     pvals_flat = pval_mat[upper_tri_idx]
     fdr_flat = fdr_bh(pvals_flat)
     
-    # Reconstruir matriz FDR
     fdr_mat = np.zeros((n_taxa, n_taxa))
     fdr_mat[upper_tri_idx] = fdr_flat
     fdr_mat.T[upper_tri_idx] = fdr_flat
     
-    # Crear el grafo NetworkX
     G = nx.Graph()
     for t in taxa:
         G.add_node(t)
         
     edges_added = 0
-    # Criterio ecológico: |Rho| > 0.30 y p-valor < 0.05
     for i in range(n_taxa):
         for j in range(i + 1, n_taxa):
             if abs(corr_mat[i, j]) > 0.30 and pval_mat[i, j] < 0.05:
@@ -101,7 +94,6 @@ def build_cooccurrence_network(clr_df, out_dir):
                 
     print(f"[INFO] Red construida: {n_taxa} nodos y {edges_added} interacciones significativas.")
     
-    # Remover nodos desconectados (huérfanos)
     isolated_nodes = list(nx.isolates(G))
     G.remove_nodes_from(isolated_nodes)
     
@@ -109,11 +101,9 @@ def build_cooccurrence_network(clr_df, out_dir):
         print("[WARNING] Ninguna interacción pasó los filtros estadísticos estrictos.")
         return
         
-    # Detectar Gremios (Comunidades) usando Louvain/Modularity
     print("[INFO] Detectando Gremios Funcionales usando Modularity (Louvain alternativo)...")
     communities = list(community.greedy_modularity_communities(G))
     
-    # Asignar color a cada comunidad
     color_map = []
     palette = sns.color_palette("Set2", len(communities))
     for node in G:
@@ -122,22 +112,18 @@ def build_cooccurrence_network(clr_df, out_dir):
                 color_map.append(palette[i])
                 break
                 
-    # Asignar color de línea según si la interacción es sinérgica (+) o antagonista (-)
     edge_colors = ['#d73027' if G[u][v]['weight'] < 0 else '#4575b4' for u, v in G.edges()]
     
-    # Dibujar la Red
     plt.figure(figsize=(12, 12))
     pos = nx.spring_layout(G, k=0.15, iterations=50, seed=42)
     
     nx.draw_networkx_nodes(G, pos, node_size=100, node_color=color_map, alpha=0.9, edgecolors='white', linewidths=0.5)
     nx.draw_networkx_edges(G, pos, edge_color=edge_colors, alpha=0.6, width=1.0)
     
-    # Etiquetas para todos los nodos
     labels = {n: n for n in G.nodes()}
     
     nx.draw_networkx_labels(G, pos, labels, font_size=8, font_family='sans-serif', font_weight='bold')
     
-    # Crear Leyenda para los Gremios
     import matplotlib.patches as mpatches
     legend_handles = [mpatches.Patch(color=palette[i], label=f'Gremio {i+1} ({len(comm)} taxones)') for i, comm in enumerate(communities)]
     plt.legend(handles=legend_handles, loc='upper left', title="Gremios Funcionales", bbox_to_anchor=(1.05, 1))
@@ -154,17 +140,13 @@ def build_cooccurrence_network(clr_df, out_dir):
     plt.close()
     print(f"[EXITO] Gráficas guardadas en: {out_dir} (TIFF y SVG)")
 
-
 # ==========================================
-# 2. ENFOQUE DEEP LEARNING: SPARSE AUTOENCODER (SAE)
 # ==========================================
 class SparseAutoencoder(nn.Module):
     def __init__(self, input_dim, latent_dim):
         super(SparseAutoencoder, self).__init__()
-        # Encoder: Comprimir el microbioma en Gremios Latentes
         self.encoder = nn.Linear(input_dim, latent_dim)
         self.relu = nn.ReLU()
-        # Decoder: Intentar reconstruir el microbioma original
         self.decoder = nn.Linear(latent_dim, input_dim)
         
     def forward(self, x):
@@ -185,7 +167,6 @@ def train_autoencoder_and_extract_guilds(clr_df, out_dir, meta):
     optimizer = optim.Adam(model.parameters(), lr=0.01, weight_decay=1e-5)
     mse_loss = nn.MSELoss()
     
-    # L1 Regularization factor (induce parsimonia/dispersión)
     lambda_l1 = 0.001
     
     epochs = 500
@@ -204,22 +185,17 @@ def train_autoencoder_and_extract_guilds(clr_df, out_dir, meta):
         if (epoch+1) % 100 == 0:
             print(f"       Epoch {epoch+1}/{epochs} | Loss Total: {loss.item():.4f} (Recon: {loss_recon.item():.4f})")
             
-    # Extraer los pesos sinápticos del Encoder
     # Shape = [latent_dim, input_dim] -> [10, N_Bacterias]
     encoder_weights = model.encoder.weight.detach().numpy()
     
-    # Transponemos para que las filas sean Bacterias y columnas sus "Pesos Latentes"
     weights_df = pd.DataFrame(encoder_weights.T, index=taxa, columns=[f"Latent_{i+1}" for i in range(latent_dim)])
     
-    # Calcular distancias y realizar clustering jerárquico
     print("[INFO] Realizando Clustering Jerárquico sobre el Espacio Latente...")
     dist_matrix = pdist(weights_df.values, metric='cosine')
     linkage_matrix = linkage(dist_matrix, method='ward')
     
-    # Graficar el Clustermap (Heatmap con Dendrograma)
     plt.figure(figsize=(10, 12))
     
-    # Solo graficamos las 60 bacterias con mayor señal absoluta para que sea legible
     importance = np.abs(weights_df.values).sum(axis=1)
     top_indices = np.argsort(importance)[-60:]
     top_taxa = weights_df.iloc[top_indices]
@@ -242,7 +218,6 @@ def train_autoencoder_and_extract_guilds(clr_df, out_dir, meta):
     print(f"[EXITO] Gráficas estructurales guardadas en: {out_dir} (TIFF y SVG)")
     
     # ========================================================
-    # 3. EXTRAER ACTIVACIONES POR MUESTRA Y CRUZAR CON METADATA
     # ========================================================
     print("[INFO] Generando Heatmap de Activaciones por Tratamiento y Sexo...")
     model.eval()
@@ -257,7 +232,6 @@ def train_autoencoder_and_extract_guilds(clr_df, out_dir, meta):
         act_df['Tratamiento'] = meta.loc[common_idx, 'tratamiento']
         act_df['Sexo'] = meta.loc[common_idx, 'sexo']
         
-        # Promediar por Tratamiento y Sexo
         act_mean = act_df.groupby(['Tratamiento', 'Sexo']).mean()
         
         plt.figure(figsize=(12, 8))
@@ -277,10 +251,7 @@ def train_autoencoder_and_extract_guilds(clr_df, out_dir, meta):
     else:
         print("[ADVERTENCIA] No hubo cruce entre IDs de muestra y metadata. Imposible graficar activaciones.")
 
-
-
 # ==========================================
-# FLUJO PRINCIPAL
 # ==========================================
 if __name__ == "__main__":
     base_dir = "/scratch/users/sgonzalezh852/seq/Seq_Jorge/analysis"
@@ -289,38 +260,28 @@ if __name__ == "__main__":
     out_dir = os.path.join(base_dir, "05_deep_learning", "figures")
     os.makedirs(out_dir, exist_ok=True)
     
-    # 1. Cargar datos
     print("[INFO] Cargando tabla de OTUs y Metadata...")
     meta = pd.read_csv(meta_path, index_col='sample_id')
     otu = pd.read_csv(otu_path, index_col=0) # Filas: Muestras, Columnas: Especies
     if 'Unclassified' in otu.columns:
         otu = otu.drop('Unclassified', axis=1)
         
-    # Limpiar nombres para las gráficas
     otu.columns = [clean_tax_name(idx) for idx in otu.columns]
     
-    # Agrupar columnas duplicadas si limpiar nombres generó colisiones
     otu = otu.T.groupby(otu.columns).sum().T
     
-    # 2. Filtrado Ecológico y Transformación CLR
     print("[INFO] Filtrando taxones de baja prevalencia y aplicando transformación CLR...")
-    # Mantener bacterias presentes en al menos el 20% de las muestras (ruido)
     prevalence = (otu > 0).mean(axis=0)
     otu_filtered = otu.loc[:, prevalence > 0.20]
     
-    # Manejo de Ceros (Pseudocount de 0.5 a la abundancia relativa)
-    # Primero convertimos a cuentas relativas si no lo están, asumimos que son abundancias relativas (0-1 o 0-100)
     otu_pseudo = otu_filtered + 0.5 
     
-    # Transformación CLR (Centered Log-Ratio) manual
     # CLR(x) = ln(x) - mean(ln(x))
     log_data = np.log(otu_pseudo)
     clr_data = log_data.subtract(log_data.mean(axis=1), axis=0)
     
-    # 3. Ejecutar Enfoque Tradicional
     build_cooccurrence_network(clr_data, out_dir)
     
-    # Entrenar Autoencoder para encontrar la estructura de Gremios + Activaciones
     train_autoencoder_and_extract_guilds(clr_data, out_dir, meta)
     
     print("\n[INFO] PIPELINE DE COOCURRENCIA Y GREMIOS COMPLETADO EXITOSAMENTE.")

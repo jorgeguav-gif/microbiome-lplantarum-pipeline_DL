@@ -46,17 +46,12 @@ for d in DIRECTORIES:
 # === 2. Generar plantilla de metadatos ===
 print("\n[2/2] Generando plantilla de metadatos...")
 
-# Definir estructura de muestras por lote
-# Lote1: 24 barcodes (barcode01-barcode24)
-# Lote2: 24 barcodes (barcode01-barcode24)
-# Lote3: 16 barcodes (barcode01-barcode16)
 lotes = [
     ("Lote1", 24),
     ("Lote2", 24),
     ("Lote3", 16),
 ]
 
-# Columnas del CSV
 COLUMNS = [
     "sample_id",
     "barcode",
@@ -71,7 +66,6 @@ COLUMNS = [
     "notas",
 ]
 
-# Generar filas
 rows = []
 for lote_name, n_barcodes in lotes:
     lote_prefix = lote_name.replace("Lote", "L")  # L1, L2, L3
@@ -93,11 +87,9 @@ for lote_name, n_barcodes in lotes:
         }
         rows.append(row)
 
-# Escribir CSV con comentario de encabezado
 csv_path = BASE_DIR / "metadata_template.csv"
 
 with open(csv_path, "w", newline="", encoding="utf-8") as f:
-    # Comentario explicativo al inicio del archivo
     f.write("# ============================================================\n")
     f.write("# PLANTILLA DE METADATOS - Análisis 16S rRNA Ratones CD1\n")
     f.write("# ============================================================\n")
