@@ -480,7 +480,7 @@ def ejecutar_proyecto_a(args):
 
     acc_sexo = accuracy_score(y_sexo, pred_sexo_all)
     f1_sexo = f1_score(y_sexo, pred_sexo_all, average='weighted')
-    logger.info(f"  Sexo     - Accuracy: {acc_sexo:.3f} | F1: {f1_sexo:.3f}")
+    logger.info(f"  Sex     - Accuracy: {acc_sexo:.3f} | F1: {f1_sexo:.3f}")
 
     reporte_sexo = classification_report(
         y_sexo, pred_sexo_all,
@@ -490,7 +490,7 @@ def ejecutar_proyecto_a(args):
 
     acc_trat = accuracy_score(y_trat, pred_trat_all)
     f1_trat = f1_score(y_trat, pred_trat_all, average='weighted')
-    logger.info(f"  Tratamiento - Accuracy: {acc_trat:.3f} | F1: {f1_trat:.3f}")
+    logger.info(f"  Treatment - Accuracy: {acc_trat:.3f} | F1: {f1_trat:.3f}")
 
     reporte_trat = classification_report(
         y_trat, pred_trat_all,
@@ -537,13 +537,13 @@ def ejecutar_proyecto_a(args):
     fig, axes = plt.subplots(1, 2, figsize=(14, 5))
     sns.heatmap(cm_sexo, annot=True, fmt='d', cmap='Blues',
                 xticklabels=datos.clases_sexo, yticklabels=datos.clases_sexo, ax=axes[0])
-    axes[0].set_title(f'Predicción de Sexo\nPrecisión: {acc_sexo:.3f}')
+    axes[0].set_title(f'Sex Prediction\nAccuracy: {acc_sexo:.3f}')
     axes[0].set_xlabel('Predicho')
     axes[0].set_ylabel('Real')
 
     sns.heatmap(cm_trat, annot=True, fmt='d', cmap='Oranges',
                 xticklabels=datos.clases_tratamiento, yticklabels=datos.clases_tratamiento, ax=axes[1])
-    axes[1].set_title(f'Predicción de Tratamiento\nPrecisión: {acc_trat:.3f}')
+    axes[1].set_title(f'Treatment Prediction\nAccuracy: {acc_trat:.3f}')
     axes[1].set_xlabel('Predicho')
     axes[1].set_ylabel('Real')
     plt.tight_layout()
@@ -570,8 +570,8 @@ def ejecutar_proyecto_a(args):
         ax.barh(range(top_k), importancia_total[top_idx][::-1], color='steelblue')
         ax.set_yticks(range(top_k))
         ax.set_yticklabels(labels[::-1], fontsize=8)
-        ax.set_xlabel('Importancia (Magnitud del Gradiente)')
-        ax.set_title('Top 20 Taxones Más Importantes para Predicción')
+        ax.set_xlabel('Importance (Gradient Magnitude)')
+        ax.set_title('Top 20 Most Important Taxa for Prediction')
         plt.tight_layout()
         plt.savefig(os.path.join(args.figures_dir, 'proyecto_a_importancia_es.tiff'), dpi=300, format='tiff', pil_kwargs={'compression': 'tiff_lzw'})
         plt.close()
@@ -787,8 +787,8 @@ def ejecutar_proyecto_b(args):
 
     df_eubiosis = pd.DataFrame({
         'Sample': datos.metadata.index,
-        'Tratamiento': datos.metadata[datos.col_tratamiento].values,
-        'Sexo': datos.metadata[datos.col_sexo].values if datos.col_sexo else 'NA',
+        'Treatment': datos.metadata[datos.col_tratamiento].values,
+        'Sex': datos.metadata[datos.col_sexo].values if datos.col_sexo else 'NA',
         'Error_Reconstruccion': errores_por_sample,
     })
 
@@ -802,7 +802,7 @@ def ejecutar_proyecto_b(args):
     df_eubiosis.to_csv(os.path.join(args.output_dir, 'eubiosis_scores.csv'), index=False)
 
     logger.info("\n  Score de disbiosis por grupo:")
-    resumen = df_eubiosis.groupby(['Tratamiento', 'Sexo'])['Score_Disbiosis'].agg(
+    resumen = df_eubiosis.groupby(['Treatment', 'Sex'])['Score_Disbiosis'].agg(
         ['mean', 'std', 'count']
     ).round(3)
     logger.info(f"\n{resumen}")
@@ -819,7 +819,7 @@ def ejecutar_proyecto_b(args):
     }
 
     for cepa in datos.clases_tratamiento:
-        mask = df_eubiosis['Tratamiento'] == cepa
+        mask = df_eubiosis['Treatment'] == cepa
         metricas[f'disbiosis_{cepa}_media'] = float(
             df_eubiosis.loc[mask, 'Score_Disbiosis'].mean()
         )
@@ -842,8 +842,8 @@ def ejecutar_proyecto_b(args):
     fig, ax = plt.subplots(figsize=(8, 5))
     ax.plot(historia_loss, color='steelblue', linewidth=1.5)
     ax.set_xlabel('Epoch')
-    ax.set_ylabel('Pérdida (ELBO)')
-    ax.set_title('Curva de Entrenamiento del VAE')
+    ax.set_ylabel('Loss (ELBO)')
+    ax.set_title('VAE Training Curve')
     ax.set_yscale('log')
     plt.tight_layout()
     plt.savefig(os.path.join(args.figures_dir, 'proyecto_b_loss_es.tiff'), dpi=300, format='tiff', pil_kwargs={'compression': 'tiff_lzw'})
@@ -859,8 +859,8 @@ def ejecutar_proyecto_b(args):
         fig, ax = plt.subplots(figsize=(10, 8))
         for trat in datos.clases_tratamiento:
             for sexo_val in datos.clases_sexo:
-                mask = (df_eubiosis['Tratamiento'] == trat) & \
-                       (df_eubiosis['Sexo'] == sexo_val)
+                mask = (df_eubiosis['Treatment'] == trat) & \
+                       (df_eubiosis['Sex'] == sexo_val)
                 if mask.sum() > 0:
                     ax.scatter(
                         df_eubiosis.loc[mask, 'Latente_1'],
@@ -878,9 +878,9 @@ def ejecutar_proyecto_b(args):
         plt.tight_layout()
         plt.savefig(os.path.join(args.figures_dir, 'proyecto_b_latente_en.tiff'), dpi=300, format='tiff', pil_kwargs={'compression': 'tiff_lzw'}, bbox_inches='tight')
 
-        ax.set_xlabel('Dimensión Latente 1')
-        ax.set_ylabel('Dimensión Latente 2')
-        ax.set_title('Espacio Latente del VAE\n(Entrenado con Controles)')
+        ax.set_xlabel('Latent Dimension 1')
+        ax.set_ylabel('Latent Dimension 2')
+        ax.set_title('VAE Latent Space\n(Trained with Controls)')
         plt.tight_layout()
         plt.savefig(os.path.join(args.figures_dir, 'proyecto_b_latente_es.tiff'), dpi=300, format='tiff', pil_kwargs={'compression': 'tiff_lzw'}, bbox_inches='tight')
         plt.close()
@@ -891,7 +891,7 @@ def ejecutar_proyecto_b(args):
     datos_boxplot = []
 
     for i, trat in enumerate(datos.clases_tratamiento):
-        mask = df_eubiosis['Tratamiento'] == trat
+        mask = df_eubiosis['Treatment'] == trat
         vals = df_eubiosis.loc[mask, 'Score_Disbiosis'].values
         datos_boxplot.append(vals)
         posiciones.append(i)
@@ -916,9 +916,9 @@ def ejecutar_proyecto_b(args):
     plt.tight_layout()
     plt.savefig(os.path.join(args.figures_dir, 'proyecto_b_disbiosis_en.tiff'), dpi=300, format='tiff', pil_kwargs={'compression': 'tiff_lzw'})
 
-    ax.set_xlabel('Tratamiento')
-    ax.set_ylabel('Score de Disbiosis (z-score)')
-    ax.set_title('Evaluación de Disbiosis por Tratamiento\n(Basado en Error de Reconstrucción del VAE)')
+    ax.set_xlabel('Treatment')
+    ax.set_ylabel('Dysbiosis Score (z-score)')
+    ax.set_title('Dysbiosis Evaluation by Treatment\n(Based on VAE Reconstruction Error)')
     plt.tight_layout()
     plt.savefig(os.path.join(args.figures_dir, 'proyecto_b_disbiosis_es.tiff'), dpi=300, format='tiff', pil_kwargs={'compression': 'tiff_lzw'})
     plt.close()
@@ -1286,7 +1286,7 @@ def ejecutar_proyecto_c(args):
 
     reporte_texto = classification_report(y, todas_pred, target_names=clases_genero)
     with open(os.path.join(args.output_dir, 'reporte_clasificacion.txt'), 'w') as f:
-        f.write("REPORTE DE CLASIFICACIÓN TAXONÓMICA\n")
+        f.write("TAXONOMIC CLASSIFICATION REPORT\n")
         f.write("=" * 50 + "\n\n")
         f.write(reporte_texto)
     logger.info(f"\n{reporte_texto}")
@@ -1295,9 +1295,9 @@ def ejecutar_proyecto_c(args):
     fig, ax = plt.subplots(figsize=(12, 10))
     sns.heatmap(cm, annot=True, fmt='d', cmap='YlOrRd',
                 xticklabels=clases_genero, yticklabels=clases_genero, ax=ax)
-    ax.set_xlabel('Género Predicted')
-    ax.set_ylabel('Género Actual')
-    ax.set_title(f'Clasificación Taxonómica por Transformer\n'
+    ax.set_xlabel('Predicted Genus')
+    ax.set_ylabel('Actual Genus')
+    ax.set_title(f'Taxonomic Classification via Transformer\n'
                  f'Accuracy: {acc:.3f} | F1: {f1:.3f}')
     plt.xticks(rotation=45, ha='right')
     plt.yticks(rotation=0)
@@ -1312,8 +1312,8 @@ def ejecutar_proyecto_c(args):
     ax.plot(avg_train, label='Entrenamiento', color='steelblue')
     ax.plot(avg_val, label='Validación', color='coral')
     ax.set_xlabel('Epoch')
-    ax.set_ylabel('Pérdida (Cross-Entropy)')
-    ax.set_title('Curvas de Aprendizaje del Transformer (Promedio 5-fold)')
+    ax.set_ylabel('Loss (Cross-Entropy)')
+    ax.set_title('Transformer Learning Curves (5-fold Average)')
     ax.legend()
     plt.tight_layout()
     plt.savefig(os.path.join(args.figures_dir, 'proyecto_c_loss.tiff'), dpi=300, format='tiff', pil_kwargs={'compression': 'tiff_lzw'})
@@ -1325,7 +1325,7 @@ def ejecutar_proyecto_c(args):
     ax.set_yticks(range(len(clases_genero)))
     ax.set_yticklabels(clases_genero, fontsize=9)
     ax.set_xlabel('F1-Score')
-    ax.set_title('F1-Score por Género')
+    ax.set_title('F1-Score per Genus')
     ax.set_xlim(0, 1)
 
     for bar, val in zip(bars, f1_por_genero):

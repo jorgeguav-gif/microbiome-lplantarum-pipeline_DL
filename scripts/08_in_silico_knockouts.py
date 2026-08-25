@@ -116,13 +116,13 @@ def main():
     ax = sns.barplot(data=impact_df, x='Impacto_Medio', y='Taxon', palette=colors)
     plt.axvline(x=0, color='black', linestyle='-', linewidth=1.5, alpha=0.7)
     
-    plt.title("In Silico Knockouts: Importancia Causal Ecológica (IA)", pad=20, fontsize=15, fontweight='bold')
-    plt.xlabel("Impacto en Disbiosis al Extinguir Especie (Δ Error de Reconstrucción)", fontsize=13)
-    plt.ylabel("Especie Bacteriana Extinguida", fontsize=13)
+    plt.title("In Silico Knockouts: Ecological Causal Importance (AI)", pad=20, fontsize=15, fontweight='bold')
+    plt.xlabel("Impact on Dysbiosis upon Species Extinction (Δ Reconstruction Error)", fontsize=13)
+    plt.ylabel("Extinguished Bacterial Species", fontsize=13)
     
-    plt.text(0.01, 0.98, '← Extinción beneficiosa\n(Patógenos/Disbióticos)', 
+    plt.text(0.01, 0.98, '← Beneficial extinction\n(Pathogens/Dysbiotics)', 
              transform=ax.transAxes, color='#E64B35', fontsize=11, fontweight='bold', va='top')
-    plt.text(0.99, 0.98, 'Extinción perjudicial →\n(Keystones/Protectores)', 
+    plt.text(0.99, 0.98, 'Harmful extinction →\n(Keystones/Protectors)', 
              transform=ax.transAxes, color='#4DBBD5', fontsize=11, fontweight='bold', ha='right', va='top')
              
     sns.despine()

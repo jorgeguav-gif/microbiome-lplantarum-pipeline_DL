@@ -50,7 +50,7 @@ res_df = pd.DataFrame(results).dropna(subset=['p_value'])
 res_df['p_adj'] = stats.false_discovery_control(res_df['p_value'])
 res_df = res_df.sort_values('p_value')
 
-print("--- TOP ESPECIES CON CRECIMIENTO DIFERENCIAL (PS128 vs CONTROL) ---")
+print("--- TOP SPECIES WITH DIFFERENTIAL GROWTH (PS128 vs CONTROL) ---")
 print(res_df.head(10).to_string(index=False))
 
 resultados_lm20 = []
@@ -66,6 +66,6 @@ for especie in valid_species:
 res_lm20_df = pd.DataFrame(resultados_lm20)
 if len(res_lm20_df) > 0:
     res_lm20_df = res_lm20_df.sort_values('p_value')
-    print("\n--- TOP ESPECIES CON CRECIMIENTO DIFERENCIAL (LM20 vs CONTROL) ---")
+    print("\n--- TOP SPECIES WITH DIFFERENTIAL GROWTH (LM20 vs CONTROL) ---")
     print(res_lm20_df.head(5).to_string(index=False))
 

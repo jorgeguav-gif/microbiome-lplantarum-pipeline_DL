@@ -171,7 +171,7 @@ def main():
     save_nature_tiff(g.fig, os.path.join(out_dir, "species_heatmap_en.tiff"))
     
     g.cax.set_ylabel('Z-score (Abundancia)')
-    g.ax_heatmap.set_xlabel("Tratamiento")
+    g.ax_heatmap.set_xlabel("Treatment")
     save_nature_tiff(g.fig, os.path.join(out_dir, "species_heatmap_es.tiff"))
     plt.close('all')
 

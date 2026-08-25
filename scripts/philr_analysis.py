@@ -410,12 +410,12 @@ def main():
         if has_sm:
             df_model = pd.DataFrame({
                 'Balance': df_bal[col],
-                'Tratamiento': meta['tratamiento'],
-                'Sexo': meta['sexo']
+                'Treatment': meta['tratamiento'],
+                'Sex': meta['sexo']
             })
             try:
-                model = smf.ols("Balance ~ C(Tratamiento, Treatment('Control')) + C(Sexo)", data=df_model).fit()
-                pvals_tratamiento = [p for name, p in zip(model.pvalues.index, model.pvalues) if 'Tratamiento' in name]
+                model = smf.ols("Balance ~ C(Treatment, Treatment('Control')) + C(Sex)", data=df_model).fit()
+                pvals_tratamiento = [p for name, p in zip(model.pvalues.index, model.pvalues) if 'Treatment' in name]
                 best_pval = min(pvals_tratamiento) if pvals_tratamiento else 1.0
                 resultados_reg.append({'Balance': col, 'p_value': best_pval, 'Method': 'OLS_Adjusted'})
             except:
@@ -446,7 +446,7 @@ def main():
         plt.title("Top Balance Filogenético Diferencial", fontsize=16)
         plt.suptitle(top_balance, fontsize=10, y=0.92, color='gray')
         plt.ylabel("Log-Ratio Isométrico (Balance)", fontsize=12)
-        plt.xlabel("Tratamiento", fontsize=12)
+        plt.xlabel("Treatment", fontsize=12)
         if ax.get_legend():
             ax.get_legend().remove()
         

@@ -21,16 +21,16 @@ try:
     exch = pd.read_csv(exchanges_file)
     growth = pd.read_csv(growth_rates_file)
     
-    print("--- ARCHIVOS CARGADOS CORRECTAMENTE ---")
+    print("--- FILES LOADED SUCCESSFULLY ---")
     print(f"Samples en exchanges: {exch['sample_id'].nunique()}")
     print(f"Samples en growth_rates: {growth['sample_id'].nunique()}")
     
     growth = growth[growth['compartments'] != 'm']
 
-    print("\n--- RESUMEN DE TABLA DE TASAS DE CRECIMIENTO ---")
+    print("\n--- GROWTH RATES TABLE SUMMARY ---")
     print(growth.head())
     
-    print("\n--- RESUMEN DE TABLA DE FLUJOS (EXCHANGES) ---")
+    print("\n--- EXCHANGES TABLE SUMMARY ---")
     print(exch.head())
 
 except Exception as e:

@@ -206,21 +206,21 @@ def main():
     fig.savefig(os.path.join(out_dir, "binn_metabolic_importance.svg"), format='svg', bbox_inches='tight')
     plt.close()
     
-    print("[INFO] Generating Heatmap de Activaciones Metabólicas por Tratamiento...")
+    print("[INFO] Generating Heatmap de Activaciones Metabólicas por Treatment...")
     metabolic_act_df = pd.DataFrame(metabolic_state.detach().numpy(), index=X_df.index, columns=pathways_names)
     
     top_pathways = np.array(pathways_names)[idx_sort[-15:]]
     metabolic_act_top = metabolic_act_df[top_pathways].copy()
     
-    metabolic_act_top['Tratamiento'] = meta.loc[metabolic_act_top.index, 'tratamiento']
+    metabolic_act_top['Treatment'] = meta.loc[metabolic_act_top.index, 'tratamiento']
     
-    metabolic_mean = metabolic_act_top.groupby('Tratamiento').mean()
+    metabolic_mean = metabolic_act_top.groupby('Treatment').mean()
     
     plt.figure(figsize=(12, 8))
-    sns.heatmap(metabolic_mean.T, cmap='viridis', annot=True, fmt=".2f", linewidths=.5, cbar_kws={'label': 'Nivel de Activación Medio'})
-    plt.title("Activación de Vías Metabólicas Clave por Tratamiento (BINN)", pad=20, fontsize=14)
-    plt.xlabel("Tratamiento", fontsize=12)
-    plt.ylabel("Vía Metabólica (Priors KEGG)", fontsize=12)
+    sns.heatmap(metabolic_mean.T, cmap='viridis', annot=True, fmt=".2f", linewidths=.5, cbar_kws={'label': 'Mean Activation Level'})
+    plt.title("Activation of Key Metabolic Pathways by Treatment (BINN)", pad=20, fontsize=14)
+    plt.xlabel("Treatment", fontsize=12)
+    plt.ylabel("Metabolic Pathway (KEGG Priors)", fontsize=12)
     plt.xticks(rotation=45, ha='right')
     
     out_binn_heat_tiff = os.path.join(out_dir, "binn_activacion_metabolica_tratamiento.tiff")

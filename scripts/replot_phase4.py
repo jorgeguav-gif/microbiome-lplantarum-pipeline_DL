@@ -87,8 +87,8 @@ plt.annotate('', xy=(x_max, y_mean_end), xytext=(x_min, y_mean_start),
              arrowprops=dict(facecolor='gray', shrink=0.05, alpha=0.3, width=15, headwidth=30))
 
 plt.title('Trayectoria Evolutiva del Ecosistema\n(Spectral Embedding)', fontsize=16, fontweight='bold', pad=20)
-plt.xlabel('Dimensión Latente 1 (Eje Evolutivo)', fontsize=14)
-plt.ylabel('Dimensión Latente 2', fontsize=14)
+plt.xlabel('Latent Dimension 1 (Eje Evolutivo)', fontsize=14)
+plt.ylabel('Latent Dimension 2', fontsize=14)
 plt.legend(title='Treatment', fontsize=12, title_fontsize=14, loc='best')
 plt.tight_layout()
 plt.savefig(os.path.join(figures_dir, 'trayectoria_2d_ecosistema.svg'), dpi=300)

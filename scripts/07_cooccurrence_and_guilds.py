@@ -101,7 +101,7 @@ def build_cooccurrence_network(clr_df, out_dir):
         print("[WARNING] Ninguna interacción pasó los filtros estadísticos estrictos.")
         return
         
-    print("[INFO] Detectando Gremios Funcionales usando Modularity (Louvain alternativo)...")
+    print("[INFO] Detectando Guilds Funcionales usando Modularity (Louvain alternativo)...")
     communities = list(community.greedy_modularity_communities(G))
     
     color_map = []
@@ -125,10 +125,10 @@ def build_cooccurrence_network(clr_df, out_dir):
     nx.draw_networkx_labels(G, pos, labels, font_size=8, font_family='sans-serif', font_weight='bold')
     
     import matplotlib.patches as mpatches
-    legend_handles = [mpatches.Patch(color=palette[i], label=f'Gremio {i+1} ({len(comm)} taxones)') for i, comm in enumerate(communities)]
-    plt.legend(handles=legend_handles, loc='upper left', title="Gremios Funcionales", bbox_to_anchor=(1.05, 1))
+    legend_handles = [mpatches.Patch(color=palette[i], label=f'Guild {i+1} ({len(comm)} taxones)') for i, comm in enumerate(communities)]
+    plt.legend(handles=legend_handles, loc='upper left', title="Guilds Funcionales", bbox_to_anchor=(1.05, 1))
     
-    plt.title("Red de Coocurrencia Ecológica y Gremios Funcionales (Algoritmo Louvain)", fontsize=14, pad=20)
+    plt.title("Red de Coocurrencia Ecológica y Guilds Funcionales (Algoritmo Louvain)", fontsize=14, pad=20)
     plt.axis('off')
     
     out_path_tiff = os.path.join(out_dir, "red_coocurrencia_tradicional.tiff")
@@ -155,7 +155,7 @@ class SparseAutoencoder(nn.Module):
         return encoded, decoded
 
 def train_autoencoder_and_extract_guilds(clr_df, out_dir, meta):
-    print("\n[INFO] Training Autoencoder Disperso (Deep Learning) para encontrar Gremios Latentes...")
+    print("\n[INFO] Training Autoencoder Disperso (Deep Learning) para encontrar Guilds Latentes...")
     
     taxa = clr_df.columns.tolist()
     X = torch.tensor(clr_df.values, dtype=torch.float32)
@@ -202,11 +202,11 @@ def train_autoencoder_and_extract_guilds(clr_df, out_dir, meta):
     
     g = sns.clustermap(top_taxa, metric='euclidean', method='ward', cmap='RdBu_r', 
                        figsize=(12, 10), standard_scale=1, center=0,
-                       cbar_kws={'label': 'Intensidad Sináptica (Escalada)'})
+                       cbar_kws={'label': 'Synaptic Intensity (Scaled)'})
     
-    g.fig.suptitle("Gremios Funcionales Latentes descubiertos por el Autoencoder Disperso", y=1.02, fontsize=14)
-    g.ax_heatmap.set_ylabel("Taxones Microbianos")
-    g.ax_heatmap.set_xlabel("Vectores Latentes (Gremios)")
+    g.fig.suptitle("Guilds Funcionales Latentes descubiertos por el Autoencoder Disperso", y=1.02, fontsize=14)
+    g.ax_heatmap.set_ylabel("Microbial Taxa")
+    g.ax_heatmap.set_xlabel("Vectores Latentes (Guilds)")
     
     out_path_tiff = os.path.join(out_dir, "gremios_latentes_deep_learning.tiff")
     g.savefig(out_path_tiff, format='tiff', dpi=300, pil_kwargs={"compression": "tiff_lzw"}, bbox_inches='tight')
@@ -219,26 +219,26 @@ def train_autoencoder_and_extract_guilds(clr_df, out_dir, meta):
     
     # ========================================================
     # ========================================================
-    print("[INFO] Generating Heatmap de Activaciones por Tratamiento y Sexo...")
+    print("[INFO] Generating Heatmap de Activaciones por Treatment y Sex...")
     model.eval()
     with torch.no_grad():
         activations, _ = model(X) # (n_samples, latent_dim)
         
-    act_df = pd.DataFrame(activations.numpy(), index=clr_df.index, columns=[f"Gremio_{i+1}" for i in range(latent_dim)])
+    act_df = pd.DataFrame(activations.numpy(), index=clr_df.index, columns=[f"Guild_{i+1}" for i in range(latent_dim)])
     
     common_idx = act_df.index.intersection(meta.index)
     if len(common_idx) > 0:
         act_df = act_df.loc[common_idx]
-        act_df['Tratamiento'] = meta.loc[common_idx, 'tratamiento']
-        act_df['Sexo'] = meta.loc[common_idx, 'sexo']
+        act_df['Treatment'] = meta.loc[common_idx, 'tratamiento']
+        act_df['Sex'] = meta.loc[common_idx, 'sexo']
         
-        act_mean = act_df.groupby(['Tratamiento', 'Sexo']).mean()
+        act_mean = act_df.groupby(['Treatment', 'Sex']).mean()
         
         plt.figure(figsize=(12, 8))
-        ax = sns.heatmap(act_mean, cmap='viridis', annot=True, fmt=".2f", linewidths=.5, cbar_kws={'label': 'Nivel de Activación Medio'})
-        plt.title("Nivel de Activación de Gremios Funcionales por Cohorte Biológica", pad=20, fontsize=14)
-        plt.ylabel("Cohorte (Tratamiento, Sexo)", fontsize=12)
-        plt.xlabel("Gremios Latentes", fontsize=12)
+        ax = sns.heatmap(act_mean, cmap='viridis', annot=True, fmt=".2f", linewidths=.5, cbar_kws={'label': 'Mean Activation Level'})
+        plt.title("Nivel de Activación de Guilds Funcionales por Cohorte Biológica", pad=20, fontsize=14)
+        plt.ylabel("Cohort (Treatment, Sex)", fontsize=12)
+        plt.xlabel("Guilds Latentes", fontsize=12)
         plt.xticks(rotation=45, ha='right')
         plt.yticks(rotation=0)
         
@@ -284,4 +284,4 @@ if __name__ == "__main__":
     
     train_autoencoder_and_extract_guilds(clr_data, out_dir, meta)
     
-    print("\n[INFO] PIPELINE DE COOCURRENCIA Y GREMIOS COMPLETADO EXITOSAMENTE.")
+    print("\n[INFO] CO-OCCURRENCE AND GUILDS PIPELINE COMPLETED SUCCESSFULLY.")

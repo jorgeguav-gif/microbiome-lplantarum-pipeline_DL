@@ -22,19 +22,19 @@ content = re.sub(
 )
 
 replacements = {
-    'Predicción de Sexo': 'Sex Prediction',
-    'Predicción de Tratamiento': 'Treatment Prediction',
+    'Sex Prediction': 'Sex Prediction',
+    'Treatment Prediction': 'Treatment Prediction',
     'Predicho': 'Predicted',
     'Real': 'Actual',
-    'Importancia (magnitud del gradiente)': 'Importance (Gradient Magnitude)',
-    'Top 20 Taxa más Importantes para Predicción': 'Top 20 Most Important Taxa for Prediction',
-    'Reconstrucción de Control vs Tratados': 'Reconstruction of Control vs Treated',
-    'Error de Reconstrucción (MSE)': 'Reconstruction Error (MSE)',
-    'Distribución del Error de Reconstrucción': 'Reconstruction Error Distribution',
-    'Espacio Latente (PCA)': 'Latent Space (PCA)',
-    'Componente Principal 1': 'Principal Component 1',
-    'Componente Principal 2': 'Principal Component 2',
-    'Matriz de Confusión': 'Confusion Matrix',
+    'Importance (Gradient Magnitude)': 'Importance (Gradient Magnitude)',
+    'Top 20 Most Important Taxa for Prediction': 'Top 20 Most Important Taxa for Prediction',
+    'Reconstruction of Control vs Treated': 'Reconstruction of Control vs Treated',
+    'Reconstruction Error (MSE)': 'Reconstruction Error (MSE)',
+    'Reconstruction Error Distribution': 'Reconstruction Error Distribution',
+    'Latent Space (PCA)': 'Latent Space (PCA)',
+    'Principal Component 1': 'Principal Component 1',
+    'Principal Component 2': 'Principal Component 2',
+    'Confusion Matrix': 'Confusion Matrix',
     'Precisión': 'Accuracy'
 }
 

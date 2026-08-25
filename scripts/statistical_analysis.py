@@ -90,7 +90,7 @@ def main():
         save_tiff(fig, os.path.join(args.figures_dir, f"alpha_{metric.lower()}_en.tiff"))
         
         plt.title(title_es)
-        plt.xlabel('Tratamiento')
+        plt.xlabel('Treatment')
         plt.ylabel(metric)
         save_tiff(fig, os.path.join(args.figures_dir, f"alpha_{metric.lower()}_es.tiff"))
         plt.close(fig)
@@ -103,10 +103,10 @@ def main():
         plt.legend(title='Sex')
         save_tiff(fig, os.path.join(args.figures_dir, f"alpha_{metric.lower()}_sex_en.tiff"))
         
-        plt.title(f"{title_es} por Sexo")
-        plt.xlabel('Tratamiento')
+        plt.title(f"{title_es} por Sex")
+        plt.xlabel('Treatment')
         plt.ylabel(metric)
-        plt.legend(title='Sexo')
+        plt.legend(title='Sex')
         save_tiff(fig, os.path.join(args.figures_dir, f"alpha_{metric.lower()}_sex_es.tiff"))
         plt.close(fig)
 
@@ -127,7 +127,7 @@ def main():
     plt.ylabel(f"PC2 ({var_exp[1]:.1f}%)")
     save_tiff(fig, os.path.join(args.figures_dir, "beta_aitchison_tratamiento_en.tiff"))
 
-    plt.title(f"PCA de Aitchison por Tratamiento\nPC1 ({var_exp[0]:.1f}%) - PC2 ({var_exp[1]:.1f}%)")
+    plt.title(f"PCA de Aitchison por Treatment\nPC1 ({var_exp[0]:.1f}%) - PC2 ({var_exp[1]:.1f}%)")
     save_tiff(fig, os.path.join(args.figures_dir, "beta_aitchison_tratamiento_es.tiff"))
     plt.close(fig)
 
@@ -175,7 +175,7 @@ def main():
     plt.ylabel(f"PC2 ({var_exp_corr[1]:.1f}%)")
     save_tiff(fig, os.path.join(args.figures_dir, "beta_aitchison_tratamiento_corrected_en.tiff"))
 
-    plt.title(f"PCA de Aitchison por Tratamiento (Corregido por Batch)\nPC1 ({var_exp_corr[0]:.1f}%) - PC2 ({var_exp_corr[1]:.1f}%)")
+    plt.title(f"PCA de Aitchison por Treatment (Corregido por Batch)\nPC1 ({var_exp_corr[0]:.1f}%) - PC2 ({var_exp_corr[1]:.1f}%)")
     save_tiff(fig, os.path.join(args.figures_dir, "beta_aitchison_tratamiento_corrected_es.tiff"))
     plt.close(fig)
 
