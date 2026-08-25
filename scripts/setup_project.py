@@ -12,7 +12,7 @@ para el análisis de secuenciación 16S rRNA de ratones CD1.
 
 Proyecto: Efecto de cepas de P. plantarum (LM20, G7, P128) en microbiota intestinal
 Animales: 64 ratones CD1 (32M + 32F), 4 tratamientos
-Secuenciación: MinION Mk1D, Kit SQK-16S114-24, 3 lotes
+Secuenciación: MinION Mk1D, Kit SQK-16S114-24, 3 batchs
 """
 
 import os
@@ -44,18 +44,18 @@ for d in DIRECTORIES:
     print(f"  ✓ {dir_path}")
 
 # === 2. Generar plantilla de metadatos ===
-print("\n[2/2] Generando plantilla de metadatos...")
+print("\n[2/2] Generating plantilla de metadatos...")
 
-lotes = [
-    ("Lote1", 24),
-    ("Lote2", 24),
-    ("Lote3", 16),
+batchs = [
+    ("Batch1", 24),
+    ("Batch2", 24),
+    ("Batch3", 16),
 ]
 
 COLUMNS = [
     "sample_id",
     "barcode",
-    "lote",
+    "batch",
     "sexo",
     "tratamiento",
     "cepa_probiotico",
@@ -67,15 +67,15 @@ COLUMNS = [
 ]
 
 rows = []
-for lote_name, n_barcodes in lotes:
-    lote_prefix = lote_name.replace("Lote", "L")  # L1, L2, L3
+for batch_name, n_barcodes in batchs:
+    batch_prefix = batch_name.replace("Batch", "L")  # L1, L2, L3
     for i in range(1, n_barcodes + 1):
-        sample_id = f"{lote_prefix}_BC{i:02d}"
+        sample_id = f"{batch_prefix}_BC{i:02d}"
         barcode = f"barcode{i:02d}"
         row = {
             "sample_id": sample_id,
             "barcode": barcode,
-            "lote": lote_name,
+            "batch": batch_name,
             "sexo": "",
             "tratamiento": "",
             "cepa_probiotico": "",
@@ -109,11 +109,11 @@ with open(csv_path, "w", newline="", encoding="utf-8") as f:
     f.write("#   8. fecha_sacrificio: formato YYYY-MM-DD\n")
     f.write("#   9. notas: observaciones adicionales\n")
     f.write("# \n")
-    f.write("# Distribución de barcodes por lote:\n")
-    f.write("#   Lote1: barcode01-barcode24 (24 muestras)\n")
-    f.write("#   Lote2: barcode01-barcode24 (24 muestras)\n")
-    f.write("#   Lote3: barcode01-barcode16 (16 muestras)\n")
-    f.write("#   Total: 64 muestras\n")
+    f.write("# Distribución de barcodes por batch:\n")
+    f.write("#   Batch1: barcode01-barcode24 (24 samples)\n")
+    f.write("#   Batch2: barcode01-barcode24 (24 samples)\n")
+    f.write("#   Batch3: barcode01-barcode16 (16 samples)\n")
+    f.write("#   Total: 64 samples\n")
     f.write("# \n")
     f.write("# Diseño experimental: 64 ratones CD1 (32M + 32F)\n")
     f.write("#   4 tratamientos x 16 ratones = 64 total\n")
@@ -125,7 +125,7 @@ with open(csv_path, "w", newline="", encoding="utf-8") as f:
     writer.writerows(rows)
 
 print(f"  ✓ {csv_path}")
-print(f"    → {len(rows)} muestras registradas ({', '.join(f'{name}: {n}' for name, n in lotes)})")
+print(f"    → {len(rows)} samples registradas ({', '.join(f'{name}: {n}' for name, n in batchs)})")
 
 # === Resumen ===
 print("\n" + "=" * 60)
@@ -133,7 +133,7 @@ print("ESTRUCTURA DEL PROYECTO:")
 print("=" * 60)
 for d in DIRECTORIES:
     print(f"  📁 analysis/{d}/")
-print(f"  📄 analysis/metadata_template.csv ({len(rows)} muestras)")
+print(f"  📄 analysis/metadata_template.csv ({len(rows)} samples)")
 print("\n✅ Proyecto configurado correctamente.")
 print("\n⚠️  SIGUIENTE PASO: Completar metadata_template.csv con los")
 print("   datos experimentales reales (sexo, tratamiento, etc.)")

@@ -22,8 +22,8 @@ try:
     growth = pd.read_csv(growth_rates_file)
     
     print("--- ARCHIVOS CARGADOS CORRECTAMENTE ---")
-    print(f"Muestras en exchanges: {exch['sample_id'].nunique()}")
-    print(f"Muestras en growth_rates: {growth['sample_id'].nunique()}")
+    print(f"Samples en exchanges: {exch['sample_id'].nunique()}")
+    print(f"Samples en growth_rates: {growth['sample_id'].nunique()}")
     
     growth = growth[growth['compartments'] != 'm']
 

@@ -36,7 +36,7 @@ mkdir -p "${FIGURES_DIR}"
 mkdir -p "${ANALYSIS_DIR}/logs"
 
 echo "    Directory DL      : ${DL_DIR}"
-echo "    Directory modelos : ${MODELS_DIR}"
+echo "    Directory models : ${MODELS_DIR}"
 echo "    Directory figuras : ${FIGURES_DIR}"
 
 echo ""
@@ -111,14 +111,14 @@ if faltantes:
 " || echo "    Error verificando dependencias"
 
 echo ""
-echo ">>> [5/6] Ejecutando pipeline de Deep Learning..."
+echo ">>> [5/6] Running pipeline de Deep Learning..."
 
 DL_SCRIPT="${DL_DIR}/microbiome_dl_pipeline.py"
 OTU_TABLE="${ANALYSIS_DIR}/03_classification/combined/otu_table.csv"
 METADATA="${ANALYSIS_DIR}/metadata.csv"
 
 if [ ! -f "${DL_SCRIPT}" ]; then
-    echo "ERROR: Script no encontrado: ${DL_SCRIPT}"
+    echo "ERROR: Script no found: ${DL_SCRIPT}"
     exit 1
 fi
 
@@ -167,7 +167,7 @@ for proyecto in proyecto_a proyecto_b; do
         n_files=$(find "${dir}" -type f | wc -l)
         echo "  ✓ ${proyecto}: ${n_files} files generados"
     else
-        echo "  ✗ ${proyecto}: directory no encontrado"
+        echo "  ✗ ${proyecto}: directory no found"
     fi
 done
 
@@ -175,7 +175,7 @@ N_MODELS=$(find "${MODELS_DIR}" -type f -name "*.pt" -o -name "*.pth" 2>/dev/nul
 N_FIGURES=$(find "${FIGURES_DIR}" -type f -name "*.tiff" 2>/dev/null | wc -l)
 
 echo ""
-echo "  Modelos guardados: ${N_MODELS}"
+echo "  Models guardados: ${N_MODELS}"
 echo "  Figuras generadas: ${N_FIGURES}"
 
 echo ""

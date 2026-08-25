@@ -60,7 +60,7 @@ def build_cooccurrence_network(clr_df, out_dir):
     corr_mat = np.zeros((n_taxa, n_taxa))
     pval_mat = np.zeros((n_taxa, n_taxa))
     
-    print("[INFO] Calculando coeficiente de Spearman sobre espacio CLR...")
+    print("[INFO] Calculating coeficiente de Spearman sobre espacio CLR...")
     for i in range(n_taxa):
         for j in range(i, n_taxa):
             if i == j:
@@ -155,7 +155,7 @@ class SparseAutoencoder(nn.Module):
         return encoded, decoded
 
 def train_autoencoder_and_extract_guilds(clr_df, out_dir, meta):
-    print("\n[INFO] Entrenando Autoencoder Disperso (Deep Learning) para encontrar Gremios Latentes...")
+    print("\n[INFO] Training Autoencoder Disperso (Deep Learning) para encontrar Gremios Latentes...")
     
     taxa = clr_df.columns.tolist()
     X = torch.tensor(clr_df.values, dtype=torch.float32)
@@ -219,7 +219,7 @@ def train_autoencoder_and_extract_guilds(clr_df, out_dir, meta):
     
     # ========================================================
     # ========================================================
-    print("[INFO] Generando Heatmap de Activaciones por Tratamiento y Sexo...")
+    print("[INFO] Generating Heatmap de Activaciones por Tratamiento y Sexo...")
     model.eval()
     with torch.no_grad():
         activations, _ = model(X) # (n_samples, latent_dim)
@@ -247,9 +247,9 @@ def train_autoencoder_and_extract_guilds(clr_df, out_dir, meta):
         out_act_svg = os.path.join(out_dir, "activacion_gremios_tratamiento.svg")
         plt.savefig(out_act_svg, format='svg', bbox_inches='tight')
         plt.close()
-        print(f"[EXITO] Heatmap de Activaciones guardado en {out_dir}")
+        print(f"[EXITO] Heatmap de Activaciones saved at {out_dir}")
     else:
-        print("[ADVERTENCIA] No hubo cruce entre IDs de muestra y metadata. Imposible graficar activaciones.")
+        print("[ADVERTENCIA] No hubo cruce entre IDs de sample y metadata. Imposible graficar activaciones.")
 
 # ==========================================
 # ==========================================
@@ -262,7 +262,7 @@ if __name__ == "__main__":
     
     print("[INFO] Cargando tabla de OTUs y Metadata...")
     meta = pd.read_csv(meta_path, index_col='sample_id')
-    otu = pd.read_csv(otu_path, index_col=0) # Filas: Muestras, Columnas: Especies
+    otu = pd.read_csv(otu_path, index_col=0) # Filas: Samples, Columnas: Especies
     if 'Unclassified' in otu.columns:
         otu = otu.drop('Unclassified', axis=1)
         

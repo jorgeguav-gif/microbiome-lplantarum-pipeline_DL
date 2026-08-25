@@ -18,7 +18,7 @@ from microbiome_dl_pipeline import MicrobiomeDataset, MicrobiomeVAE
 
 def get_dysbiosis_scores(model, X_tensor):
     """
-    Calcula el puntaje de disbiosis (Reconstruction Loss + KL Divergence) para cada muestra.
+    Calcula el puntaje de disbiosis (Reconstruction Loss + KL Divergence) para cada sample.
     """
     model.eval()
     with torch.no_grad():
@@ -54,7 +54,7 @@ def main():
     
     print("[INFO] Restaurando red neuronal entrenada (VAE)...")
     if not os.path.exists(model_path):
-        print(f"[ERROR] No se encontró el modelo entrenado en {model_path}")
+        print(f"[ERROR] Not found el model entrenado en {model_path}")
         print("Asegúrate de haber ejecutado 03_deep_learning.sh previamente.")
         sys.exit(1)
         
@@ -66,7 +66,7 @@ def main():
     else:
         model.load_state_dict(checkpoint)
         
-    print("[INFO] Calculando puntajes de Eubiosis base (Real)...")
+    print("[INFO] Calculating puntajes de Eubiosis base (Real)...")
     baseline_scores = get_dysbiosis_scores(model, X_tensor)
     
     print("[INFO] Preparando microcirugía computacional (Knockouts)...")
@@ -110,7 +110,7 @@ def main():
             
     impact_df = pd.DataFrame(knockout_impacts).sort_values(by='Impacto_Medio', ascending=True)
     
-    print("[INFO] Generando gráfico de Causalidad (Impacto Causal)...")
+    print("[INFO] Generating plot de Causalidad (Impacto Causal)...")
     plt.figure(figsize=(10, 14))
     
     colors = ['#E64B35' if x < 0 else '#4DBBD5' for x in impact_df['Impacto_Medio']]
@@ -137,7 +137,7 @@ def main():
     plt.savefig(out_svg, format='svg')
     plt.close()
     
-    print(f"[EXITO] Análisis finalizado. Gráficos en {out_dir}")
+    print(f"[EXITO] Análisis finalizado. Plots en {out_dir}")
 
 if __name__ == '__main__':
     main()

@@ -9,16 +9,16 @@ set -e
 
 echo "=========================================================="
 echo "Starting EPI2ME wf-16s pipeline"
-echo "Trabajo SLURM: $SLURM_JOB_ID"
-echo "Nodo: $SLURM_JOB_NODELIST"
-echo "Fecha: $(date)"
+echo "SLURM Job: $SLURM_JOB_ID"
+echo "Node: $SLURM_JOB_NODELIST"
+echo "Date: $(date)"
 echo "=========================================================="
 
 source ~/.bashrc
 conda activate nextflow_env
 
 if [ -z "$1" ]; then
-    echo "Error: Debes especificar el lote. Ejemplo: sbatch 01b_epi2me_wf16s.sh Lote1"
+    echo "Error: You must specify the batch. Example: sbatch 01b_epi2me_wf16s.sh Batch1"
     exit 1
 fi
 
@@ -37,8 +37,8 @@ mkdir -p $OUT_DIR
 mkdir -p $NEXTFLOW_CACHE
 export NXF_SINGULARITY_CACHEDIR=$NEXTFLOW_CACHE
 
-echo "Analizando Lote: $LOTE"
-echo "Directory FASTQ: $FASTQ_DIR"
+echo "Analyzing Batch: $LOTE"
+echo "FASTQ Directory: $FASTQ_DIR"
 
 cd $OUT_DIR
 
@@ -49,7 +49,7 @@ cat << 'EOF_WRAP' > "$OUT_DIR/bin/singularity"
 #!/bin/bash
 REAL_SING="REPLACE_ME_SINGULARITY_PATH"
 if [ ! -x "$REAL_SING" ]; then
-    echo "Error: no se encontró Singularity en $REAL_SING"
+    echo "Error: Singularity not found at $REAL_SING"
     exit 1
 fi
 args=()
@@ -74,6 +74,6 @@ nextflow run epi2me-labs/wf-16s \
     --threads 8
 
 echo "=========================================================="
-echo "Pipeline finalizado: $(date)"
-echo "Results en: $OUT_DIR"
+echo "Pipeline finished: $(date)"
+echo "Results at: $OUT_DIR"
 echo "=========================================================="

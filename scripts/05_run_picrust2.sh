@@ -53,14 +53,14 @@ fi
 rm -rf ${OUT_DIR}
 
 if [ -f "picrust2.sif" ]; then
-    echo "Ejecutando a través de contenedor aislado..."
+    echo "Running a través de contenedor aislado..."
     if command -v apptainer &> /dev/null; then
         apptainer exec picrust2.sif picrust2_pipeline.py -s ${FASTA} -i ${TSV} -o ${OUT_DIR} -p 8 --verbose
     else
         singularity exec picrust2.sif picrust2_pipeline.py -s ${FASTA} -i ${TSV} -o ${OUT_DIR} -p 8 --verbose
     fi
 else
-    echo "Ejecutando a través de Micromamba..."
+    echo "Running a través de Micromamba..."
     eval "$(./micromamba shell hook -s bash)"
     micromamba activate ${ANALYSIS_DIR}/picrust2_env
     picrust2_pipeline.py -s ${FASTA} -i ${TSV} -o ${OUT_DIR} -p 8 --verbose

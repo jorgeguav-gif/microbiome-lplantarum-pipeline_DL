@@ -20,7 +20,7 @@ ANALYSIS_DIR="/scratch/users/sgonzalezh852/seq/Seq_Jorge/analysis"
 FASTQ_FILE=$(find "${LOTE1_UNCLASS_DIR}" -name "*.fastq.gz" | head -n 1)
 
 if [ -z "${FASTQ_FILE}" ]; then
-    echo "ERROR: No se encontró ningún file fastq.gz en ${LOTE1_UNCLASS_DIR}"
+    echo "ERROR: Not found ningún file fastq.gz en ${LOTE1_UNCLASS_DIR}"
     exit 1
 fi
 

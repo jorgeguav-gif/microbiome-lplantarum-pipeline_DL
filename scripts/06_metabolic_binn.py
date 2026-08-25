@@ -147,8 +147,8 @@ def main():
     os.makedirs(out_dir, exist_ok=True)
     
     print("[INFO] Cargando datos...")
-    # El archivo original tiene Filas=Muestras, Columnas=Especies
-    # Usamos .T para pasarlo a Filas=Especies, Columnas=Muestras
+    # El file original tiene Filas=Samples, Columnas=Especies
+    # Usamos .T para pasarlo a Filas=Especies, Columnas=Samples
     otu = pd.read_csv(otu_path, index_col=0).T 
     
     if 'Unclassified' in otu.index:
@@ -160,7 +160,7 @@ def main():
     meta = pd.read_csv(meta_path, index_col='sample_id')
     
     comunes = otu.columns.intersection(meta.index)
-    X_df = otu[comunes].T # Ahora sí transponemos: Filas: Muestras, Columnas: Especies
+    X_df = otu[comunes].T # Ahora sí transponemos: Filas: Samples, Columnas: Especies
     
     y_labels = meta.loc[comunes, 'tratamiento'].apply(lambda x: 0 if x == 'Control' else 1).values
     
@@ -178,7 +178,7 @@ def main():
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.AdamW(filter(lambda p: p.requires_grad, model.parameters()), lr=0.01)
     
-    print("[INFO] Entrenando BINN...")
+    print("[INFO] Training BINN...")
     model.train()
     for epoch in range(150):
         optimizer.zero_grad()
@@ -211,7 +211,7 @@ def main():
     fig.savefig(os.path.join(out_dir, "binn_metabolic_importance.svg"), format='svg', bbox_inches='tight')
     plt.close()
     
-    print("[INFO] Generando Heatmap de Activaciones Metabólicas por Tratamiento...")
+    print("[INFO] Generating Heatmap de Activaciones Metabólicas por Tratamiento...")
     metabolic_act_df = pd.DataFrame(metabolic_state.detach().numpy(), index=X_df.index, columns=pathways_names)
     
     top_pathways = np.array(pathways_names)[idx_sort[-15:]]
@@ -234,7 +234,7 @@ def main():
     plt.savefig(out_binn_heat_svg, format='svg', bbox_inches='tight')
     plt.close()
     
-    print(f"[INFO] BINN finalizado. Gráficos (TIFF y SVG) guardados en {out_dir}")
+    print(f"[INFO] BINN finalizado. Plots (TIFF y SVG) guardados en {out_dir}")
 
 if __name__ == "__main__":
     main()

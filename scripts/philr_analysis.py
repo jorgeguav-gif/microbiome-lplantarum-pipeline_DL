@@ -349,7 +349,7 @@ def main():
     
     otu_rel = otu_pseudo.div(otu_pseudo.sum(axis=1), axis=0)
 
-    print("Calculando Balances Filogenéticos Evolutivos (PhILR)...")
+    print("Calculating Balances Filogenéticos Evolutivos (PhILR)...")
     balances = {}
     node_idx = 0
     for clade in tree.get_nonterminals():
@@ -379,7 +379,7 @@ def main():
     df_bal = df_bal.loc[common_samples]
     meta = meta.loc[common_samples]
     
-    print("Generando PCA de balances...")
+    print("Generating PCA de balances...")
     pca = PCA(n_components=2)
     coords = pca.fit_transform(df_bal)
     var_exp = pca.explained_variance_ratio_ * 100

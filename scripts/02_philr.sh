@@ -19,7 +19,7 @@ conda activate bio_pytorch 2>/dev/null || conda activate microbiota_env
 BASE_DIR="/scratch/users/sgonzalezh852/seq/Seq_Jorge/analysis"
 PY_SCRIPT="${BASE_DIR}/04_statistics/philr_analysis.py"
 
-echo "Ejecutando script de análisis PhILR en Python..."
+echo "Running script de análisis PhILR en Python..."
 python "${PY_SCRIPT}" \
     --otu_table "${BASE_DIR}/03_classification/combined/otu_table.csv" \
     --metadata "${BASE_DIR}/metadata.csv" \

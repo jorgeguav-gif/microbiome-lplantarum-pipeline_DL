@@ -44,11 +44,11 @@ conda activate bio_pytorch 2>/dev/null || {
     exit 1
 }
 
-echo "    Python encontrado en: $(which python)"
+echo "    Python found en: $(which python)"
 echo "    Versión de Python   : $(python --version 2>&1)"
 
 echo ""
-echo ">>> [3/5] Ejecutando análisis estadístico en Python..."
+echo ">>> [3/5] Running análisis estadístico en Python..."
 echo "    Inicio: $(date '+%H:%M:%S')"
 
 python "${STATS_DIR}/statistical_analysis.py" \

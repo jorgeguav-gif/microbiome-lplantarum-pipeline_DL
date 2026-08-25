@@ -21,11 +21,11 @@ PROJECT_DIR="/scratch/users/sgonzalezh852/seq/Seq_Jorge/analysis"
 DL_SCRIPT="${PROJECT_DIR}/05_deep_learning/08_in_silico_knockouts.py"
 
 if [ ! -f "${DL_SCRIPT}" ]; then
-    echo "[ERROR] Script Python no encontrado: ${DL_SCRIPT}"
+    echo "[ERROR] Script Python no found: ${DL_SCRIPT}"
     exit 1
 fi
 
-echo ">>> [2/2] Ejecutando Simulaciones Computacionales de Extinción..."
+echo ">>> [2/2] Running Simulaciones Computacionales de Extinción..."
 python "${DL_SCRIPT}"
 
 echo ""

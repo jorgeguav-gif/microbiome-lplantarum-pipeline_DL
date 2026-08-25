@@ -7,12 +7,12 @@
 
 #!/usr/bin/env python3
 """
-Script para unificar las tablas de abundancia de EPI2ME (wf-16s) de los 3 Lotes.
+Script para unificar las tablas de abundancia de EPI2ME (wf-16s) de los 3 Batchs.
 Este script:
-1. Busca los archivos de abundancia generados por EPI2ME para Lote1, Lote2 y Lote3.
-2. Renombra las columnas de barcodes para que coincidan con la metadata (ej. barcode01 en Lote1 -> L1_BC01).
-3. Transpone la matriz para que las Filas sean Muestras y las Columnas sean Taxas (Requisito para Machine Learning).
-4. Une los tres lotes rellenando con 0 las especies que no aparezcan en alguno de los lotes.
+1. Busca los files de abundancia generados por EPI2ME para Batch1, Batch2 y Batch3.
+2. Renombra las columnas de barcodes para que coincidan con la metadata (ej. barcode01 en Batch1 -> L1_BC01).
+3. Transpone la matriz para que las Filas sean Samples y las Columnas sean Taxas (Requisito para Machine Learning).
+4. Une los tres batchs rellenando con 0 las especies que no aparezcan en alguno de los batchs.
 5. Exporta el resultado final a analysis/03_classification/combined/otu_table.csv
 """
 
@@ -27,38 +27,38 @@ OUT_DIR = CLASS_DIR / "combined"
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 LOTE_PREFIXES = {
-    "Lote1": "L1",
-    "Lote2": "L2",
-    "Lote3": "L3"
+    "Batch1": "L1",
+    "Batch2": "L2",
+    "Batch3": "L3"
 }
 
-dfs_lotes = []
+dfs_batchs = []
 
 print("==========================================================")
-print("Iniciando unificación de tablas de abundancia de EPI2ME...")
+print("Starting unificación de tablas de abundancia de EPI2ME...")
 print("==========================================================")
 
-for lote, prefix in LOTE_PREFIXES.items():
-    lote_dir = CLASS_DIR / f"epi2me_{lote}"
+for batch, prefix in LOTE_PREFIXES.items():
+    batch_dir = CLASS_DIR / f"epi2me_{batch}"
     
-    if not lote_dir.exists():
-        print(f"[Advertencia] El directorio {lote_dir} no existe aún. ¿Ya terminó EPI2ME para este lote?")
+    if not batch_dir.exists():
+        print(f"[Advertencia] El directorio {batch_dir} no existe aún. ¿Ya terminó EPI2ME para este batch?")
         continue
     
-    archivos_tsv = glob.glob(str(lote_dir / "**" / "*abundance*.tsv"), recursive=True)
-    archivos_csv = glob.glob(str(lote_dir / "**" / "*abundance*.csv"), recursive=True)
+    files_tsv = glob.glob(str(batch_dir / "**" / "*abundance*.tsv"), recursive=True)
+    files_csv = glob.glob(str(batch_dir / "**" / "*abundance*.csv"), recursive=True)
     
-    archivos = archivos_tsv + archivos_csv
+    files = files_tsv + files_csv
     
-    if not archivos:
-        archivos = glob.glob(str(lote_dir / "**" / "taxonomic_report*.*"), recursive=True)
+    if not files:
+        files = glob.glob(str(batch_dir / "**" / "taxonomic_report*.*"), recursive=True)
             
-    if not archivos:
-        print(f"[Error] No se encontró ninguna tabla de abundancia en {lote_dir}")
+    if not files:
+        print(f"[Error] Not found ninguna tabla de abundancia en {batch_dir}")
         continue
         
-    target_file = archivos[0]
-    print(f"[{lote}] Procesando: {target_file}")
+    target_file = files[0]
+    print(f"[{batch}] Processing: {target_file}")
     
     if target_file.endswith('.tsv'):
         df = pd.read_csv(target_file, sep='\t')
@@ -72,7 +72,7 @@ for lote, prefix in LOTE_PREFIXES.items():
             break
             
     if not taxa_col:
-        print(f"  -> No se pudo identificar la columna taxonómica en {lote}. Omitiendo.")
+        print(f"  -> No se pudo identificar la columna taxonómica en {batch}. Omitiendo.")
         continue
         
     barcode_cols = [c for c in df.columns if 'barcode' in c.lower() or 'l' in c.lower()]
@@ -85,7 +85,7 @@ for lote, prefix in LOTE_PREFIXES.items():
     
     df_abund = df_abund.groupby(taxa_col).sum().reset_index()
     
-    # 5. Transponer para que Filas = Muestras, Columnas = Taxas
+    # 5. Transponer para que Filas = Samples, Columnas = Taxas
     df_abund.set_index(taxa_col, inplace=True)
     df_t = df_abund.transpose()
 
@@ -99,7 +99,7 @@ for lote, prefix in LOTE_PREFIXES.items():
             num = str(numeros[-1]).zfill(2)
             bc_str = f"barcode{num}"
             
-            match = meta_df[(meta_df['lote'] == lote) & (meta_df['barcode'] == bc_str)]
+            match = meta_df[(meta_df['batch'] == batch) & (meta_df['barcode'] == bc_str)]
             if not match.empty:
                 nuevos_indices[idx] = match['sample_id'].values[0]
             else:
@@ -108,16 +108,16 @@ for lote, prefix in LOTE_PREFIXES.items():
             nuevos_indices[idx] = f"{prefix}_{idx}"
             
     df_t.rename(index=nuevos_indices, inplace=True)
-    dfs_lotes.append(df_t)
+    dfs_batchs.append(df_t)
 
-if dfs_lotes:
-    print("\n[INFO] Uniendo matrices de los tres lotes...")
-    df_final = pd.concat(dfs_lotes, axis=0, join='outer')
+if dfs_batchs:
+    print("\n[INFO] Uniendo matrices de los tres batchs...")
+    df_final = pd.concat(dfs_batchs, axis=0, join='outer')
     df_final.fillna(0, inplace=True)
     
     meta_df = pd.read_csv(CLASS_DIR.parent / "metadata.csv")
-    muestras_validas = meta_df['sample_id'].dropna().tolist()
-    df_final = df_final[df_final.index.isin(muestras_validas)]
+    samples_validas = meta_df['sample_id'].dropna().tolist()
+    df_final = df_final[df_final.index.isin(samples_validas)]
     
     out_file = OUT_DIR / "otu_table.csv"
     df_final.index.name = "sample_id"
@@ -125,7 +125,7 @@ if dfs_lotes:
     
     print("==========================================================")
     print(f"¡Éxito! Tabla unificada guardada en: {out_file}")
-    print(f"Dimensiones finales: {df_final.shape[0]} muestras, {df_final.shape[1]} especies taxonómicas.")
+    print(f"Dimensiones finales: {df_final.shape[0]} samples, {df_final.shape[1]} especies taxonómicas.")
     print("El proyecto ahora está completamente listo para el script de Deep Learning.")
     print("==========================================================")
 else:

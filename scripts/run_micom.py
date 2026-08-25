@@ -97,7 +97,7 @@ def main():
         
         args_list.append((sample_id, taxa_df, db_file))
         
-    print(f"Construyendo modelos comunitarios con MICOM (AGORA2) para {len(args_list)} muestras...")
+    print(f"Construyendo models comunitarios con MICOM (AGORA2) para {len(args_list)} samples...")
     
     threads = min(32, multiprocessing.cpu_count())
     with multiprocessing.Pool(threads) as pool:

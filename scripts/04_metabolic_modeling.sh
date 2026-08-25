@@ -10,7 +10,7 @@ set -eo pipefail
 echo "=========================================================="
 echo "Starting Phase 3: Modelado Metabólico con MICOM (AGORA1.03)"
 echo "Job ID: $SLURM_JOB_ID"
-echo "Nodo: $SLURMD_NODENAME"
+echo "Node: $SLURMD_NODENAME"
 echo "Fecha y Hora de Inicio: $(date)"
 echo "=========================================================="
 
@@ -24,7 +24,7 @@ PYTHON_SCRIPT="${MODEL_DIR}/run_micom.py"
 
 cd "${BASE_DIR}"
 
-echo "[$(date +'%Y-%m-%d %H:%M:%S')] Ejecutando pipeline computacional (64 muestras en 32 cores)..."
+echo "[$(date +'%Y-%m-%d %H:%M:%S')] Running pipeline computacional (64 samples en 32 cores)..."
 python "${PYTHON_SCRIPT}"
 
 echo "=========================================================="

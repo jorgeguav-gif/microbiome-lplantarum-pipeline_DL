@@ -58,7 +58,7 @@ def main():
     
     otu = otu.groupby(otu.index).sum()
     
-    print(f"[INFO] Procesando {len(otu.index)} especies únicas...")
+    print(f"[INFO] Processing {len(otu.index)} especies únicas...")
     
     records = []
     valid_species = []
@@ -71,7 +71,7 @@ def main():
             records.append(SeqRecord(Seq(seq), id=safe_id, description=""))
             valid_species.append(sp)
         else:
-            print(f"  -> No se encontró secuencia de referencia. Se omitirá en PICRUSt2.")
+            print(f"  -> Not found secuencia de referencia. Se omitirá en PICRUSt2.")
         time.sleep(0.5) # Respetar límites de API NCBI
         
     SeqIO.write(records, out_fasta, "fasta")

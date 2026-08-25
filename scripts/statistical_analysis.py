@@ -64,11 +64,11 @@ def main():
     otu = pd.read_csv(args.otu_table, index_col=0)
     meta = pd.read_csv(args.metadata, index_col='sample_id')
     
-    muestras_comunes = otu.index.intersection(meta.index)
-    otu = otu.loc[muestras_comunes]
-    meta = meta.loc[muestras_comunes]
+    samples_comunes = otu.index.intersection(meta.index)
+    otu = otu.loc[samples_comunes]
+    meta = meta.loc[samples_comunes]
 
-    print("[INFO] Calculando Diversidad Alfa...")
+    print("[INFO] Calculating Diversidad Alfa...")
     alpha_div = pd.DataFrame(index=otu.index)
     alpha_div['Shannon'] = otu.apply(shannon_index, axis=1)
     alpha_div['Simpson'] = otu.apply(simpson_index, axis=1)
@@ -136,21 +136,21 @@ def main():
     plt.close(fig)
 
     fig = plt.figure(figsize=(10, 8))
-    sns.scatterplot(data=df_beta, x='PC1', y='PC2', hue='lote', s=100, palette='Set2')
+    sns.scatterplot(data=df_beta, x='PC1', y='PC2', hue='batch', s=100, palette='Set2')
     plt.title(f"Batch Effect Evaluation (Aitchison PCA)\nPC1 ({var_exp[0]:.1f}%) - PC2 ({var_exp[1]:.1f}%)")
     plt.xlabel(f"PC1 ({var_exp[0]:.1f}%)")
     plt.ylabel(f"PC2 ({var_exp[1]:.1f}%)")
-    save_tiff(fig, os.path.join(args.figures_dir, "beta_aitchison_lote_en.tiff"))
+    save_tiff(fig, os.path.join(args.figures_dir, "beta_aitchison_batch_en.tiff"))
 
-    plt.title(f"Evaluación de Efecto de Lote (PCA de Aitchison)\nPC1 ({var_exp[0]:.1f}%) - PC2 ({var_exp[1]:.1f}%)")
-    save_tiff(fig, os.path.join(args.figures_dir, "beta_aitchison_lote_es.tiff"))
+    plt.title(f"Evaluación de Efecto de Batch (PCA de Aitchison)\nPC1 ({var_exp[0]:.1f}%) - PC2 ({var_exp[1]:.1f}%)")
+    save_tiff(fig, os.path.join(args.figures_dir, "beta_aitchison_batch_es.tiff"))
     plt.close(fig)
 
-    print("[INFO] Corrigiendo efecto de lote (Mean-centering en CLR)...")
+    print("[INFO] Corrigiendo efecto de batch (Mean-centering en CLR)...")
     otu_clr_corrected = otu_clr.copy()
     global_means = otu_clr.mean(axis=0)
-    for batch in meta['lote'].unique():
-        batch_idx = meta['lote'] == batch
+    for batch in meta['batch'].unique():
+        batch_idx = meta['batch'] == batch
         batch_means = otu_clr[batch_idx].mean(axis=0)
         otu_clr_corrected[batch_idx] = otu_clr[batch_idx] - batch_means + global_means
     
@@ -162,14 +162,14 @@ def main():
     df_beta_corr.to_csv(os.path.join(args.output_dir, "beta_diversity_aitchison_corrected.csv"))
     
     fig = plt.figure(figsize=(10, 8))
-    sns.scatterplot(data=df_beta_corr, x='PC1', y='PC2', hue='lote', s=100, palette='Set2')
+    sns.scatterplot(data=df_beta_corr, x='PC1', y='PC2', hue='batch', s=100, palette='Set2')
     plt.title(f"Batch Effect Corrected (Aitchison PCA)\nPC1 ({var_exp_corr[0]:.1f}%) - PC2 ({var_exp_corr[1]:.1f}%)")
     plt.xlabel(f"PC1 ({var_exp_corr[0]:.1f}%)")
     plt.ylabel(f"PC2 ({var_exp_corr[1]:.1f}%)")
-    save_tiff(fig, os.path.join(args.figures_dir, "beta_aitchison_lote_corrected_en.tiff"))
+    save_tiff(fig, os.path.join(args.figures_dir, "beta_aitchison_batch_corrected_en.tiff"))
 
-    plt.title(f"Efecto de Lote Corregido (PCA de Aitchison)\nPC1 ({var_exp_corr[0]:.1f}%) - PC2 ({var_exp_corr[1]:.1f}%)")
-    save_tiff(fig, os.path.join(args.figures_dir, "beta_aitchison_lote_corrected_es.tiff"))
+    plt.title(f"Efecto de Batch Corregido (PCA de Aitchison)\nPC1 ({var_exp_corr[0]:.1f}%) - PC2 ({var_exp_corr[1]:.1f}%)")
+    save_tiff(fig, os.path.join(args.figures_dir, "beta_aitchison_batch_corrected_es.tiff"))
     plt.close(fig)
 
     fig = plt.figure(figsize=(10, 8))
@@ -179,7 +179,7 @@ def main():
     plt.ylabel(f"PC2 ({var_exp_corr[1]:.1f}%)")
     save_tiff(fig, os.path.join(args.figures_dir, "beta_aitchison_tratamiento_corrected_en.tiff"))
 
-    plt.title(f"PCA de Aitchison por Tratamiento (Corregido por Lote)\nPC1 ({var_exp_corr[0]:.1f}%) - PC2 ({var_exp_corr[1]:.1f}%)")
+    plt.title(f"PCA de Aitchison por Tratamiento (Corregido por Batch)\nPC1 ({var_exp_corr[0]:.1f}%) - PC2 ({var_exp_corr[1]:.1f}%)")
     save_tiff(fig, os.path.join(args.figures_dir, "beta_aitchison_tratamiento_corrected_es.tiff"))
     plt.close(fig)
 
@@ -201,7 +201,7 @@ def main():
     df_kw = pd.DataFrame(resultados_kw).sort_values('p_value')
     df_kw.to_csv(os.path.join(args.output_dir, "diferencial_kruskal_wallis_clr.csv"), index=False)
 
-    print("[INFO] ¡Análisis composicional completado exitosamente!")
+    print("[INFO] ¡Análisis composicional completed exitosamente!")
 
 if __name__ == "__main__":
     main()

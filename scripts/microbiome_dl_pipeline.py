@@ -14,7 +14,7 @@ Tres proyectos integrados:
     A) Predictor de Fenotipo (Multi-head MLP): Predice sexo y tratamiento
        a partir de perfiles de abundancia
     B) VAE para Eubiosis: Autoencoder variacional entrenado con controles
-       para cuantificar disbiosis en muestras tratadas
+       para cuantificar disbiosis en samples tratadas
     C) Transformer para 16S: Clasificación taxonómica a nivel de género
        usando tokenización por k-mers de lecturas 16S
 
@@ -29,7 +29,7 @@ Uso:
     python microbiome_dl_pipeline.py transformer --reads_dir ... --taxonomy_ref ...
 
 Autor: Jorge
-Fecha: Julio 2026
+Date: Julio 2026
 """
 
 import argparse
@@ -143,38 +143,38 @@ class DatosMicrobioma:
 
     def __init__(self, otu_path: str, metadata_path: str):
         """
-        Cargar tabla OTU y metadata desde archivos CSV.
+        Cargar tabla OTU y metadata desde files CSV.
 
         Parámetros:
-            otu_path: Ruta a la tabla OTU (muestras × taxa)
-            metadata_path: Ruta al archivo de metadata
+            otu_path: Ruta a la tabla OTU (samples × taxa)
+            metadata_path: Ruta al file de metadata
         """
         logger.info(f"Cargando tabla OTU: {otu_path}")
         self.otu = pd.read_csv(otu_path, index_col=0)
-        logger.info(f"  Dimensiones OTU: {self.otu.shape[0]} muestras × {self.otu.shape[1]} taxa")
+        logger.info(f"  Dimensiones OTU: {self.otu.shape[0]} samples × {self.otu.shape[1]} taxa")
 
         logger.info(f"Cargando metadata: {metadata_path}")
         self.metadata = pd.read_csv(metadata_path, index_col=0)
         logger.info(f"  Dimensiones metadata: {self.metadata.shape}")
 
-        self._alinear_muestras()
+        self._alinear_samples()
 
         self._identificar_columnas()
 
         self._codificar_variables()
 
-    def _alinear_muestras(self):
-        """Alinear muestras entre OTU y metadata."""
+    def _alinear_samples(self):
+        """Alinear samples entre OTU y metadata."""
         comunes = self.otu.index.intersection(self.metadata.index)
         if len(comunes) == 0:
-            raise ValueError("No hay muestras en común entre OTU y metadata")
+            raise ValueError("No hay samples en común entre OTU y metadata")
 
         self.otu = self.otu.loc[comunes]
         self.metadata = self.metadata.loc[comunes]
-        logger.info(f"  Muestras alineadas: {len(comunes)}")
+        logger.info(f"  Samples alineadas: {len(comunes)}")
 
     def _identificar_columnas(self):
-        """Identificar columnas de tratamiento, sexo y lote en metadata."""
+        """Identificar columnas de tratamiento, sexo y batch en metadata."""
         cols = self.metadata.columns.str.lower()
 
         for patron in ['tratamiento', 'treatment', 'trat', 'group']:
@@ -195,14 +195,14 @@ class DatosMicrobioma:
             self.col_sexo = self.metadata.columns[1] if len(self.metadata.columns) > 1 else None
         logger.info(f"  Columna sexo: '{self.col_sexo}'")
 
-        for patron in ['lote', 'lot', 'batch']:
+        for patron in ['batch', 'lot', 'batch']:
             matches = [c for c, cl in zip(self.metadata.columns, cols) if patron in cl]
             if matches:
-                self.col_lote = matches[0]
+                self.col_batch = matches[0]
                 break
         else:
-            self.col_lote = None
-        logger.info(f"  Columna lote: '{self.col_lote}'")
+            self.col_batch = None
+        logger.info(f"  Columna batch: '{self.col_batch}'")
 
     def _codificar_variables(self):
         """Codificar variables categóricas como enteros."""
@@ -230,7 +230,7 @@ class DatosMicrobioma:
             normalizar: Si True, normalizar a abundancia relativa
 
         Retorna:
-            Matriz numpy de abundancias (muestras × taxa)
+            Matriz numpy de abundancias (samples × taxa)
         """
         X = self.otu.values.astype(np.float32)
         if normalizar:
@@ -240,12 +240,12 @@ class DatosMicrobioma:
         return X
 
     def obtener_indices_control(self) -> np.ndarray:
-        """Obtener índices de las muestras de control."""
+        """Obtener índices de las samples de control."""
         control_mask = self.metadata[self.col_tratamiento] == 'Control'
         return np.where(control_mask)[0]
 
     def obtener_indices_tratados(self) -> np.ndarray:
-        """Obtener índices de las muestras tratadas (no control)."""
+        """Obtener índices de las samples tratadas (no control)."""
         tratado_mask = self.metadata[self.col_tratamiento] != 'Control'
         return np.where(tratado_mask)[0]
 
@@ -264,7 +264,7 @@ class DatasetAbundancia(Dataset):
         Inicializar dataset.
 
         Parámetros:
-            X: Matriz de abundancias (n_muestras × n_taxa)
+            X: Matriz de abundancias (n_samples × n_taxa)
             y_sexo: Etiquetas de sexo
             y_trat: Etiquetas de tratamiento
             aumentar: Si True, aplicar aumento de datos
@@ -478,32 +478,32 @@ def ejecutar_proyecto_a(args):
     y_sexo = datos.sexo
     y_trat = datos.tratamiento
 
-    n_muestras, n_taxa = X.shape
+    n_samples, n_taxa = X.shape
     n_clases_sexo = len(datos.clases_sexo)
     n_clases_trat = len(datos.clases_tratamiento)
 
-    logger.info(f"Datos: {n_muestras} muestras × {n_taxa} taxa")
+    logger.info(f"Datos: {n_samples} samples × {n_taxa} taxa")
     logger.info(f"Clases sexo: {n_clases_sexo} | Clases tratamiento: {n_clases_trat}")
 
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X)
 
     cv_folds = args.cv_folds
-    usar_loo = (n_muestras < 30) or (cv_folds >= n_muestras)
+    usar_loo = (n_samples < 30) or (cv_folds >= n_samples)
 
     if usar_loo:
         logger.info("Usando Leave-One-Out CV (n pequeño)")
         cv = LeaveOneOut()
-        n_splits = n_muestras
+        n_splits = n_samples
     else:
         logger.info(f"Usando {cv_folds}-fold Stratified CV")
         cv = StratifiedKFold(n_splits=cv_folds, shuffle=True, random_state=args.seed)
         n_splits = cv_folds
 
-    pred_sexo_all = np.zeros(n_muestras, dtype=int)
-    pred_trat_all = np.zeros(n_muestras, dtype=int)
-    prob_sexo_all = np.zeros((n_muestras, n_clases_sexo))
-    prob_trat_all = np.zeros((n_muestras, n_clases_trat))
+    pred_sexo_all = np.zeros(n_samples, dtype=int)
+    pred_trat_all = np.zeros(n_samples, dtype=int)
+    prob_sexo_all = np.zeros((n_samples, n_clases_sexo))
+    prob_trat_all = np.zeros((n_samples, n_clases_trat))
 
     importancia_total = np.zeros(n_taxa)
 
@@ -527,7 +527,7 @@ def ejecutar_proyecto_a(args):
                               drop_last=False)
         dl_test = DataLoader(ds_test, batch_size=len(test_idx), shuffle=False)
 
-        modelo = PredictorMultiHead(
+        model = PredictorMultiHead(
             n_taxa=n_taxa,
             n_clases_sexo=n_clases_sexo,
             n_clases_trat=n_clases_trat,
@@ -535,7 +535,7 @@ def ejecutar_proyecto_a(args):
             dropout=0.3
         ).to(device)
 
-        optimizer = torch.optim.AdamW(modelo.parameters(), lr=args.learning_rate,
+        optimizer = torch.optim.AdamW(model.parameters(), lr=args.learning_rate,
                                        weight_decay=1e-4)
         scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
             optimizer, T_max=args.epochs, eta_min=1e-6
@@ -552,13 +552,13 @@ def ejecutar_proyecto_a(args):
         criterion_trat = nn.CrossEntropyLoss(weight=peso_trat)
 
         for epoch in range(args.epochs):
-            modelo.train()
+            model.train()
             for batch_x, batch_y_sexo, batch_y_trat in dl_train:
                 batch_x = batch_x.to(device)
                 batch_y_sexo = batch_y_sexo.to(device)
                 batch_y_trat = batch_y_trat.to(device)
 
-                logits_sexo, logits_trat = modelo(batch_x)
+                logits_sexo, logits_trat = model(batch_x)
 
                 loss_sexo = criterion_sexo(logits_sexo, batch_y_sexo)
                 loss_trat = criterion_trat(logits_trat, batch_y_trat)
@@ -566,16 +566,16 @@ def ejecutar_proyecto_a(args):
 
                 optimizer.zero_grad()
                 loss.backward()
-                torch.nn.utils.clip_grad_norm_(modelo.parameters(), max_norm=1.0)
+                torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
                 optimizer.step()
 
             scheduler.step()
 
-        modelo.eval()
+        model.eval()
         with torch.no_grad():
             for batch_x, _, _ in dl_test:
                 batch_x = batch_x.to(device)
-                logits_sexo, logits_trat = modelo(batch_x)
+                logits_sexo, logits_trat = model(batch_x)
 
                 pred_sexo_all[test_idx] = logits_sexo.argmax(dim=1).cpu().numpy()
                 pred_trat_all[test_idx] = logits_trat.argmax(dim=1).cpu().numpy()
@@ -584,7 +584,7 @@ def ejecutar_proyecto_a(args):
 
         if fold == n_splits - 1:
             x_mean = torch.FloatTensor(X_scaled.mean(axis=0)).unsqueeze(0).to(device)
-            importancia_total += modelo.obtener_importancia(x_mean).flatten()
+            importancia_total += model.obtener_importancia(x_mean).flatten()
 
     logger.info("\n  === RESULTADOS PROYECTO A ===")
 
@@ -619,7 +619,7 @@ def ejecutar_proyecto_a(args):
             'f1_weighted': f1_trat,
             'reporte': reporte_trat
         },
-        'n_muestras': n_muestras,
+        'n_samples': n_samples,
         'n_taxa': n_taxa,
         'cv_tipo': 'LOO' if usar_loo else f'{cv_folds}-fold',
         'epochs': args.epochs
@@ -692,28 +692,28 @@ def ejecutar_proyecto_a(args):
         }).sort_values('Importancia', ascending=False)
         df_imp.to_csv(os.path.join(args.output_dir, 'importancia_taxa.csv'), index=False)
 
-    logger.info("  Entrenando modelo final con todos los datos...")
-    modelo_final = PredictorMultiHead(
+    logger.info("  Training model final con todos los datos...")
+    model_final = PredictorMultiHead(
         n_taxa=n_taxa, n_clases_sexo=n_clases_sexo,
         n_clases_trat=n_clases_trat, hidden_dims=[256, 128, 64]
     ).to(device)
 
     ds_completo = DatasetAbundancia(X_scaled, y_sexo, y_trat, aumentar=True)
     dl_completo = DataLoader(ds_completo, batch_size=args.batch_size, shuffle=True)
-    optimizer = torch.optim.AdamW(modelo_final.parameters(), lr=args.learning_rate)
+    optimizer = torch.optim.AdamW(model_final.parameters(), lr=args.learning_rate)
 
-    modelo_final.train()
+    model_final.train()
     for epoch in range(args.epochs):
         for bx, by_s, by_t in dl_completo:
             bx, by_s, by_t = bx.to(device), by_s.to(device), by_t.to(device)
-            ls, lt = modelo_final(bx)
+            ls, lt = model_final(bx)
             loss = 0.3 * criterion_sexo(ls, by_s) + 0.7 * criterion_trat(lt, by_t)
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
 
     torch.save({
-        'model_state_dict': modelo_final.state_dict(),
+        'model_state_dict': model_final.state_dict(),
         'scaler_mean': scaler.mean_,
         'scaler_scale': scaler.scale_,
         'clases_sexo': datos.clases_sexo,
@@ -721,7 +721,7 @@ def ejecutar_proyecto_a(args):
         'n_taxa': n_taxa,
     }, os.path.join(args.models_dir, 'predictor_fenotipo.pt'))
 
-    logger.info("  ✓ Proyecto A completado")
+    logger.info("  ✓ Proyecto A completed")
     return metricas
 
 # =============================================================================
@@ -730,8 +730,8 @@ def ejecutar_proyecto_a(args):
 class VAEMicrobioma(nn.Module):
     """
     Variational Autoencoder para cuantificación de eubiosis/disbiosis.
-    Se entrena SOLO con muestras de control (estado "sano").
-    El error de reconstrucción en muestras tratadas indica disbiosis.
+    Se entrena SOLO con samples de control (estado "sano").
+    El error de reconstrucción en samples tratadas indica disbiosis.
 
     Arquitectura:
         Encoder: Input → Hidden → μ, σ  (espacio latente)
@@ -829,8 +829,8 @@ class VAEMicrobioma(nn.Module):
 def ejecutar_proyecto_b(args):
     """
     Proyecto B: VAE para evaluación de Eubiosis.
-    Entrena un VAE solo con muestras de control y mide
-    la disbiosis como error de reconstrucción en muestras tratadas.
+    Entrena un VAE solo con samples de control y mide
+    la disbiosis como error de reconstrucción en samples tratadas.
     """
     logger.info("=" * 60)
     logger.info("  PROYECTO B: VAE PARA EUBIOSIS")
@@ -852,7 +852,7 @@ def ejecutar_proyecto_b(args):
     n_tratados = len(idx_tratados)
     n_taxa = X.shape[1]
 
-    logger.info(f"Muestras control: {n_control} | Muestras tratadas: {n_tratados}")
+    logger.info(f"Samples control: {n_control} | Samples tratadas: {n_tratados}")
     logger.info(f"Dimensión latente: {args.latent_dim}")
 
     scaler = StandardScaler()
@@ -864,24 +864,24 @@ def ejecutar_proyecto_b(args):
     ds_control = torch.utils.data.TensorDataset(X_ctrl_tensor)
     dl_control = DataLoader(ds_control, batch_size=args.batch_size, shuffle=True)
 
-    modelo = VAEMicrobioma(
+    model = VAEMicrobioma(
         n_taxa=n_taxa,
         hidden_dim=128,
         latent_dim=args.latent_dim,
         dropout=0.2
     ).to(device)
 
-    optimizer = torch.optim.Adam(modelo.parameters(), lr=args.learning_rate)
+    optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
         optimizer, mode='min', factor=0.5, patience=20
     )
 
     historia_loss = []
 
-    logger.info(f"Entrenando VAE por {args.epochs} epochs...")
+    logger.info(f"Training VAE por {args.epochs} epochs...")
 
     for epoch in range(args.epochs):
-        modelo.train()
+        model.train()
         epoch_loss = 0
         epoch_recon = 0
         epoch_kl = 0
@@ -891,14 +891,14 @@ def ejecutar_proyecto_b(args):
         for (batch_x,) in dl_control:
             batch_x = batch_x.to(device)
 
-            x_recon, mu, logvar = modelo(batch_x)
+            x_recon, mu, logvar = model(batch_x)
             loss, recon_loss, kl_loss = VAEMicrobioma.loss_function(
                 x_recon, batch_x, mu, logvar, beta=beta
             )
 
             optimizer.zero_grad()
             loss.backward()
-            torch.nn.utils.clip_grad_norm_(modelo.parameters(), max_norm=1.0)
+            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
             optimizer.step()
 
             epoch_loss += loss.item()
@@ -916,31 +916,31 @@ def ejecutar_proyecto_b(args):
                         f"KL: {epoch_kl / n_control:.4f} | "
                         f"β: {beta:.3f}")
 
-    logger.info("\n  Evaluando error de reconstrucción...")
-    modelo.eval()
+    logger.info("\n  Evaluating error de reconstrucción...")
+    model.eval()
 
     with torch.no_grad():
         X_all_tensor = torch.FloatTensor(X_all_scaled).to(device)
-        x_recon, mu_all, _ = modelo(X_all_tensor)
+        x_recon, mu_all, _ = model(X_all_tensor)
 
         errores_recon = F.mse_loss(x_recon, X_all_tensor, reduction='none')
-        errores_por_muestra = errores_recon.sum(dim=1).cpu().numpy()
+        errores_por_sample = errores_recon.sum(dim=1).cpu().numpy()
 
         latentes = mu_all.cpu().numpy()
 
     df_eubiosis = pd.DataFrame({
-        'Muestra': datos.metadata.index,
+        'Sample': datos.metadata.index,
         'Tratamiento': datos.metadata[datos.col_tratamiento].values,
         'Sexo': datos.metadata[datos.col_sexo].values if datos.col_sexo else 'NA',
-        'Error_Reconstruccion': errores_por_muestra,
+        'Error_Reconstruccion': errores_por_sample,
     })
 
     for d in range(args.latent_dim):
         df_eubiosis[f'Latente_{d + 1}'] = latentes[:, d]
 
-    media_ctrl = errores_por_muestra[idx_control].mean()
-    std_ctrl = max(errores_por_muestra[idx_control].std(), 1e-8)
-    df_eubiosis['Score_Disbiosis'] = (errores_por_muestra - media_ctrl) / std_ctrl
+    media_ctrl = errores_por_sample[idx_control].mean()
+    std_ctrl = max(errores_por_sample[idx_control].std(), 1e-8)
+    df_eubiosis['Score_Disbiosis'] = (errores_por_sample - media_ctrl) / std_ctrl
 
     df_eubiosis.to_csv(os.path.join(args.output_dir, 'eubiosis_scores.csv'), index=False)
 
@@ -955,7 +955,7 @@ def ejecutar_proyecto_b(args):
     metricas = {
         'error_recon_control_media': float(media_ctrl),
         'error_recon_control_std': float(std_ctrl),
-        'error_recon_tratados_media': float(errores_por_muestra[idx_tratados].mean()),
+        'error_recon_tratados_media': float(errores_por_sample[idx_tratados].mean()),
         'latent_dim': args.latent_dim,
         'epochs': args.epochs,
         'loss_final': float(historia_loss[-1]),
@@ -1067,7 +1067,7 @@ def ejecutar_proyecto_b(args):
     plt.close()
 
     torch.save({
-        'model_state_dict': modelo.state_dict(),
+        'model_state_dict': model.state_dict(),
         'scaler_mean': scaler.mean_,
         'scaler_scale': scaler.scale_,
         'latent_dim': args.latent_dim,
@@ -1076,7 +1076,7 @@ def ejecutar_proyecto_b(args):
         'std_ctrl': std_ctrl,
     }, os.path.join(args.models_dir, 'vae_eubiosis.pt'))
 
-    logger.info("  ✓ Proyecto B completado")
+    logger.info("  ✓ Proyecto B completed")
     return metricas
 
 # =============================================================================
@@ -1101,7 +1101,7 @@ class TransformerEncoder16S(nn.Module):
         Parámetros:
             vocab_size: Tamaño del vocabulario de k-mers
             n_clases: Número de clases taxonómicas (géneros)
-            d_model: Dimensión del modelo
+            d_model: Dimensión del model
             nhead: Número de cabezas de atención
             n_layers: Número de capas del encoder
             dim_feedforward: Dimensión de las capas FFN
@@ -1171,7 +1171,7 @@ def cargar_lecturas_y_taxonomia(reads_dir: str, taxonomy_ref: str,
     Cargar lecturas FASTQ y sus asignaciones taxonómicas.
 
     Parámetros:
-        reads_dir: Directorio con archivos FASTQ filtrados
+        reads_dir: Directorio con files FASTQ filtrados
         taxonomy_ref: Directorio con resultados de EMU
         max_reads: Número máximo de lecturas a cargar
 
@@ -1197,8 +1197,8 @@ def cargar_lecturas_y_taxonomia(reads_dir: str, taxonomy_ref: str,
     )
 
     if not fastq_files:
-        logger.warning(f"No se encontraron archivos FASTQ en {reads_dir}")
-        logger.info("Generando datos sintéticos de demostración...")
+        logger.warning(f"No se encontraron files FASTQ en {reads_dir}")
+        logger.info("Generating datos sintéticos de demostración...")
         return _generar_datos_sinteticos_transformer(max_reads)
 
     tax_assignments = {}
@@ -1258,7 +1258,7 @@ def _generar_datos_sinteticos_transformer(n_reads: int = 5000):
     Generar datos sintéticos de secuencias 16S para demostración.
     Crea secuencias con patrones k-mer específicos por género.
     """
-    logger.info("Generando datos sintéticos de 16S para demostración...")
+    logger.info("Generating datos sintéticos de 16S para demostración...")
 
     generos = [
         'Lactobacillus', 'Bifidobacterium', 'Bacteroides',
@@ -1357,7 +1357,7 @@ def ejecutar_proyecto_c(args):
         dl_val = DataLoader(ds_val, batch_size=args.batch_size, shuffle=False,
                             num_workers=0)
 
-        modelo = TransformerEncoder16S(
+        model = TransformerEncoder16S(
             vocab_size=vocab_size,
             n_clases=n_clases,
             d_model=128,
@@ -1369,7 +1369,7 @@ def ejecutar_proyecto_c(args):
         ).to(device)
 
         optimizer = torch.optim.AdamW(
-            modelo.parameters(), lr=args.learning_rate, weight_decay=0.01
+            model.parameters(), lr=args.learning_rate, weight_decay=0.01
         )
         scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
             optimizer, T_max=args.epochs, eta_min=1e-6
@@ -1380,7 +1380,7 @@ def ejecutar_proyecto_c(args):
         fold_loss_val = []
 
         for epoch in range(args.epochs):
-            modelo.train()
+            model.train()
             running_loss = 0
             n_batches = 0
 
@@ -1388,12 +1388,12 @@ def ejecutar_proyecto_c(args):
                 batch_tokens = batch_tokens.to(device)
                 batch_labels = batch_labels.to(device)
 
-                logits = modelo(batch_tokens)
+                logits = model(batch_tokens)
                 loss = criterion(logits, batch_labels)
 
                 optimizer.zero_grad()
                 loss.backward()
-                torch.nn.utils.clip_grad_norm_(modelo.parameters(), max_norm=1.0)
+                torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
                 optimizer.step()
 
                 running_loss += loss.item()
@@ -1403,7 +1403,7 @@ def ejecutar_proyecto_c(args):
             avg_train_loss = running_loss / max(n_batches, 1)
             fold_loss_train.append(avg_train_loss)
 
-            modelo.eval()
+            model.eval()
             val_loss = 0
             val_batches = 0
 
@@ -1411,7 +1411,7 @@ def ejecutar_proyecto_c(args):
                 for batch_tokens, batch_labels in dl_val:
                     batch_tokens = batch_tokens.to(device)
                     batch_labels = batch_labels.to(device)
-                    logits = modelo(batch_tokens)
+                    logits = model(batch_tokens)
                     loss = criterion(logits, batch_labels)
                     val_loss += loss.item()
                     val_batches += 1
@@ -1427,13 +1427,13 @@ def ejecutar_proyecto_c(args):
         historia_loss_train.append(fold_loss_train)
         historia_loss_val.append(fold_loss_val)
 
-        modelo.eval()
+        model.eval()
         with torch.no_grad():
             fold_preds = []
             fold_probs = []
             for batch_tokens, _ in dl_val:
                 batch_tokens = batch_tokens.to(device)
-                logits = modelo(batch_tokens)
+                logits = model(batch_tokens)
                 probs = F.softmax(logits, dim=1)
                 fold_preds.append(logits.argmax(dim=1).cpu().numpy())
                 fold_probs.append(probs.cpu().numpy())
@@ -1526,7 +1526,7 @@ def ejecutar_proyecto_c(args):
     plt.close()
 
     torch.save({
-        'model_state_dict': modelo.state_dict(),
+        'model_state_dict': model.state_dict(),
         'vocab': dataset.vocab,
         'clases_genero': clases_genero,
         'kmer_size': args.kmer_size,
@@ -1536,7 +1536,7 @@ def ejecutar_proyecto_c(args):
     with open(os.path.join(args.output_dir, 'vocabulario_kmers.json'), 'w') as f:
         json.dump(dataset.vocab, f)
 
-    logger.info("  ✓ Proyecto C completado")
+    logger.info("  ✓ Proyecto C completed")
     return metricas
 
 # =============================================================================
@@ -1566,7 +1566,7 @@ Ejemplos:
     parent.add_argument('--output_dir', type=str, default='results',
                         help='Directorio de salida para resultados')
     parent.add_argument('--models_dir', type=str, default='models',
-                        help='Directorio para guardar modelos')
+                        help='Directorio para guardar models')
     parent.add_argument('--figures_dir', type=str, default='figures',
                         help='Directorio para guardar figuras')
     parent.add_argument('--epochs', type=int, default=100,
@@ -1583,7 +1583,7 @@ Ejemplos:
     p_predict.add_argument('--otu_table', type=str, required=True,
                            help='Ruta a la tabla OTU (CSV)')
     p_predict.add_argument('--metadata', type=str, required=True,
-                           help='Ruta al archivo de metadata (CSV)')
+                           help='Ruta al file de metadata (CSV)')
     p_predict.add_argument('--cv_folds', type=int, default=8,
                            help='Número de folds para CV (8 recomendado con n=64)')
 
@@ -1592,7 +1592,7 @@ Ejemplos:
     p_vae.add_argument('--otu_table', type=str, required=True,
                        help='Ruta a la tabla OTU (CSV)')
     p_vae.add_argument('--metadata', type=str, required=True,
-                       help='Ruta al archivo de metadata (CSV)')
+                       help='Ruta al file de metadata (CSV)')
     p_vae.add_argument('--latent_dim', type=int, default=2,
                        help='Dimensión del espacio latente')
 
@@ -1645,7 +1645,7 @@ def main():
 
         elapsed = time.time() - inicio
         logger.info(f"\n{'=' * 60}")
-        logger.info(f"  Pipeline completado en {elapsed:.1f} segundos")
+        logger.info(f"  Pipeline completed en {elapsed:.1f} segundos")
         logger.info(f"  ({elapsed / 60:.1f} minutos)")
         logger.info(f"{'=' * 60}")
 

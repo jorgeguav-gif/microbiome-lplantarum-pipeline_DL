@@ -16,8 +16,8 @@ from Bio.Blast import NCBIXML
 
 def main():
     parser = argparse.ArgumentParser(description="Muestrea y realiza BLAST de lecturas Unclassified")
-    parser.add_argument("--fastq", required=True, help="Ruta al archivo fastq.gz unclassified")
-    parser.add_argument("--output", required=True, help="Ruta del archivo CSV de salida")
+    parser.add_argument("--fastq", required=True, help="Ruta al file fastq.gz unclassified")
+    parser.add_argument("--output", required=True, help="Ruta del file CSV de salida")
     parser.add_argument("--n_seqs", type=int, default=30, help="Número de secuencias a muestrear")
     args = parser.parse_args()
 
@@ -70,7 +70,7 @@ def main():
             
     df = pd.DataFrame(results)
     df.to_csv(args.output, index=False)
-    print(f"\n[INFO] Análisis completado. Reporte guardado en: {args.output}")
+    print(f"\n[INFO] Análisis completed. Reporte saved at: {args.output}")
 
 if __name__ == "__main__":
     main()

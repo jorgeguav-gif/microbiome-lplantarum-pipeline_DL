@@ -71,9 +71,9 @@ def main():
     
     meta = pd.read_csv(meta_path, index_col='sample_id')
     
-    muestras_comunes = otu.columns.intersection(meta.index)
-    otu = otu[muestras_comunes]
-    meta = meta.loc[muestras_comunes]
+    samples_comunes = otu.columns.intersection(meta.index)
+    otu = otu[samples_comunes]
+    meta = meta.loc[samples_comunes]
     
     if 'Unclassified' in otu.index:
         print("[INFO] Eliminando grupo 'Unclassified' del análisis...")
@@ -101,7 +101,7 @@ def main():
 
     # =========================================================================
     # =========================================================================
-    print("[INFO] Generando Stacked Bar Plot (Nature Style)...")
+    print("[INFO] Generating Stacked Bar Plot (Nature Style)...")
     fig, ax = plt.subplots(figsize=(6, 5))
     
     bottom = np.zeros(len(df_grouped))
@@ -134,7 +134,7 @@ def main():
 
     # =========================================================================
     # =========================================================================
-    print("[INFO] Generando Heatmap de Especies...")
+    print("[INFO] Generating Heatmap de Especies...")
     
     top_20 = otu_rel.mean(axis=1).nlargest(20).index
     df_heat_full = otu_rel.loc[top_20].T.join(meta[['tratamiento']])
@@ -175,7 +175,7 @@ def main():
     save_nature_tiff(g.fig, os.path.join(out_dir, "species_heatmap_es.tiff"))
     plt.close('all')
 
-    print("[INFO] ¡Gráficos de especies generados exitosamente en la carpeta 'figures'!")
+    print("[INFO] ¡Plots de especies generados exitosamente en la carpeta 'figures'!")
 
 if __name__ == "__main__":
     main()
