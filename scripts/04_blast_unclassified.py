@@ -38,7 +38,7 @@ def main():
     
     results = []
     
-    # Ejecutar BLAST vía API web (sin necesidad de DB local)
+    # Run BLAST via web API (no need for local DB)
     for i, record in enumerate(sampled_records):
         print(f"[{i+1}/{n_samples}] BLASTing {record.id} (Longitud: {len(record.seq)} pb)...")
         try:

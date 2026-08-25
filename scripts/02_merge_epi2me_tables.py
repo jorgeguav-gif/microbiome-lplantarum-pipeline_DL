@@ -48,7 +48,7 @@ for lote, prefix in LOTE_PREFIXES.items():
         print(f"[Advertencia] El directorio {lote_dir} no existe aún. ¿Ya terminó EPI2ME para este lote?")
         continue
     
-    # EPI2ME wf-16s suele generar archivos csv/tsv con 'abundance' en el nombre dentro de results o report
+    # EPI2ME wf-16s usually generates csv/tsv files with 'abundance' in the name within results or report
     archivos_tsv = glob.glob(str(lote_dir / "**" / "*abundance*.tsv"), recursive=True)
     archivos_csv = glob.glob(str(lote_dir / "**" / "*abundance*.csv"), recursive=True)
     
