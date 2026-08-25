@@ -8,12 +8,12 @@
 echo "=================================================================="
 echo " IN SILICO KNOCKOUTS PIPELINE (Deep Learning)"
 echo "=================================================================="
-echo "Inicio: $(date '+%Y-%m-%d %H:%M:%S')"
-echo "Nodo  : $(hostname)"
+echo "Start: $(date '+%Y-%m-%d %H:%M:%S')"
+echo "Node  : $(hostname)"
 echo "CPU(s): ${SLURM_CPUS_PER_TASK}"
 echo ""
 
-echo ">>> [1/2] Inicializando entorno..."
+echo ">>> [1/2] Initializing environment..."
 source ~/.bashrc
 conda activate bio_pytorch || conda activate base
 
@@ -21,15 +21,15 @@ PROJECT_DIR="/scratch/users/sgonzalezh852/seq/Seq_Jorge/analysis"
 DL_SCRIPT="${PROJECT_DIR}/05_deep_learning/08_in_silico_knockouts.py"
 
 if [ ! -f "${DL_SCRIPT}" ]; then
-    echo "[ERROR] Script Python no found: ${DL_SCRIPT}"
+    echo "[ERROR] Python script not found: ${DL_SCRIPT}"
     exit 1
 fi
 
-echo ">>> [2/2] Running Simulaciones Computacionales de Extinción..."
+echo ">>> [2/2] Running Computational Extinction Simulations..."
 python "${DL_SCRIPT}"
 
 echo ""
 echo "=================================================================="
-echo " COMPLETADO"
+echo " COMPLETED"
 echo "=================================================================="
-echo "Fin: $(date '+%Y-%m-%d %H:%M:%S')"
+echo "End: $(date '+%Y-%m-%d %H:%M:%S')"

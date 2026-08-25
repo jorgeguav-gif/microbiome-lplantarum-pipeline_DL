@@ -14,10 +14,10 @@ echo "Fecha de inicio   : $(date '+%Y-%m-%d %H:%M:%S')"
 echo "ID del trabajo    : ${SLURM_JOB_ID}"
 echo "Nombre del trabajo: ${SLURM_JOB_NAME}"
 echo "Nodo asignado     : ${SLURM_NODELIST}"
-echo "CPUs asignados    : ${SLURM_CPUS_PER_TASK}"
-echo "Memoria asignada  : ${SLURM_MEM_PER_NODE} MB"
-echo "GPUs asignadas    : ${SLURM_GPUS_ON_NODE:-1}"
-echo "Directory trabajo: $(pwd)"
+echo "Allocated CPUs    : ${SLURM_CPUS_PER_TASK}"
+echo "Allocated Memory  : ${SLURM_MEM_PER_NODE} MB"
+echo "Allocated GPUs    : ${SLURM_GPUS_ON_NODE:-1}"
+echo "Working Directory: $(pwd)"
 echo "=================================================================="
 
 SECONDS=0
@@ -29,64 +29,64 @@ MODELS_DIR="${DL_DIR}/models"
 FIGURES_DIR="${DL_DIR}/figures"
 
 echo ""
-echo ">>> [1/6] Configurando directorios..."
+echo ">>> [1/6] Configuring directories..."
 mkdir -p "${RESULTS_DIR}"
 mkdir -p "${MODELS_DIR}"
 mkdir -p "${FIGURES_DIR}"
 mkdir -p "${ANALYSIS_DIR}/logs"
 
-echo "    Directory DL      : ${DL_DIR}"
-echo "    Directory models : ${MODELS_DIR}"
-echo "    Directory figuras : ${FIGURES_DIR}"
+echo "    DL Directory      : ${DL_DIR}"
+echo "    Models Directory : ${MODELS_DIR}"
+echo "    Figures Directory : ${FIGURES_DIR}"
 
 echo ""
-echo ">>> [2/6] Configurando entorno Python + PyTorch..."
+echo ">>> [2/6] Configuring Python + PyTorch environment..."
 
 if command -v module &> /dev/null; then
-    echo "    Loading módulos del sistema..."
+    echo "    Loading system modules..."
     module purge
     module load cuda/12.1 2>/dev/null || module load cuda 2>/dev/null || true
     module load cudnn 2>/dev/null || true
 fi
 
-echo "    Activando entorno conda..."
+echo "    Activating conda environment..."
 source ~/.bashrc
 conda activate bio_pytorch 2>/dev/null || {
-    echo "ADVERTENCIA: No se pudo activar entorno conda."
-    echo "Intentando con el entorno base..."
+    echo "WARNING: Could not activate conda environment."
+    echo "Trying with base environment..."
     conda activate base 2>/dev/null || true
 }
 
 echo "    Python: $(which python)"
-echo "    Versión Python: $(python --version 2>&1)"
+echo "    Python Version: $(python --version 2>&1)"
 
 echo ""
-echo ">>> [3/6] Configurando CUDA y GPU..."
+echo ">>> [3/6] Configuring CUDA and GPU..."
 
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 export CUDA_LAUNCH_BLOCKING=0
 export TORCH_USE_CUDA_DSA=0
 
-echo "    Verificando disponibilidad de GPU..."
+echo "    Checking GPU availability..."
 python -c "
 import torch
-print(f'    PyTorch versión   : {torch.__version__}')
-print(f'    CUDA disponible   : {torch.cuda.is_available()}')
+print(f'    PyTorch version   : {torch.__version__}')
+print(f'    CUDA available   : {torch.cuda.is_available()}')
 if torch.cuda.is_available():
-    print(f'    GPU dispositivo   : {torch.cuda.get_device_name(0)}')
-    print(f'    Memoria GPU total : {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f} GB')
-    print(f'    CUDA versión      : {torch.version.cuda}')
-    print(f'    cuDNN versión     : {torch.backends.cudnn.version()}')
+    print(f'    GPU device   : {torch.cuda.get_device_name(0)}')
+    print(f'    Total GPU memory : {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f} GB')
+    print(f'    CUDA version      : {torch.version.cuda}')
+    print(f'    cuDNN version     : {torch.backends.cudnn.version()}')
 else:
-    print('    ADVERTENCIA: GPU no disponible, se usará CPU')
+    print('    WARNING: GPU not available, using CPU')
 " || {
-    echo "    ERROR: PyTorch no está instalado o no se pudo importar"
-    echo "    Instale con: pip install torch torchvision"
+    echo "    ERROR: PyTorch is not installed or could not be imported"
+    echo "    Install with: pip install torch torchvision"
     exit 1
 }
 
 echo ""
-echo ">>> [4/6] Verificando dependencias de Python..."
+echo ">>> [4/6] Checking Python dependencies..."
 python -c "
 paquetes = {
     'torch': 'PyTorch',
@@ -102,29 +102,29 @@ for pkg, nombre in paquetes.items():
         __import__(pkg)
         print(f'    ✓ {nombre}')
     except ImportError:
-        print(f'    ✗ {nombre} - NO INSTALADO')
+        print(f'    ✗ {nombre} - NOT INSTALLED')
         faltantes.append(pkg)
 
 if faltantes:
-    print(f'\n    Paquetes faltantes: {faltantes}')
-    print('    Instale con: pip install', ' '.join(faltantes))
+    print(f'\n    Missing packages: {faltantes}')
+    print('    Install with: pip install', ' '.join(faltantes))
 " || echo "    Error verificando dependencias"
 
 echo ""
-echo ">>> [5/6] Running pipeline de Deep Learning..."
+echo ">>> [5/6] Running Deep Learning pipeline..."
 
 DL_SCRIPT="${DL_DIR}/microbiome_dl_pipeline.py"
 OTU_TABLE="${ANALYSIS_DIR}/03_classification/combined/otu_table.csv"
 METADATA="${ANALYSIS_DIR}/metadata.csv"
 
 if [ ! -f "${DL_SCRIPT}" ]; then
-    echo "ERROR: Script no found: ${DL_SCRIPT}"
+    echo "ERROR: Script not found: ${DL_SCRIPT}"
     exit 1
 fi
 
 echo ""
-echo "  ═══ PROYECTO A: PREDICTOR DE FENOTIPO (Multi-head MLP) ═══"
-echo "  Inicio: $(date '+%H:%M:%S')"
+echo "  ═══ PROJECT A: PHENOTYPE PREDICTOR (Multi-head MLP) ═══"
+echo "  Start: $(date '+%H:%M:%S')"
 
 python "${DL_SCRIPT}" predict \
     --otu_table "${OTU_TABLE}" \
@@ -138,11 +138,11 @@ python "${DL_SCRIPT}" predict \
     --cv_folds 8 \
     --seed 42
 
-echo "  Fin Proyecto A: $(date '+%H:%M:%S')"
+echo "  Project A End: $(date '+%H:%M:%S')"
 
 echo ""
-echo "  ═══ PROYECTO B: VAE PARA EUBIOSIS ═══"
-echo "  Inicio: $(date '+%H:%M:%S')"
+echo "  ═══ PROJECT B: VAE FOR EUBIOSIS ═══"
+echo "  Start: $(date '+%H:%M:%S')"
 
 python "${DL_SCRIPT}" vae \
     --otu_table "${OTU_TABLE}" \
@@ -156,18 +156,18 @@ python "${DL_SCRIPT}" vae \
     --learning_rate 0.0005 \
     --seed 42
 
-echo "  Fin Proyecto B: $(date '+%H:%M:%S')"
+echo "  Project B End: $(date '+%H:%M:%S')"
 
 echo ""
-echo ">>> [6/6] Verificando results generados..."
+echo ">>> [6/6] Checking generated results..."
 
 for proyecto in proyecto_a proyecto_b; do
     dir="${RESULTS_DIR}/${proyecto}"
     if [ -d "${dir}" ]; then
         n_files=$(find "${dir}" -type f | wc -l)
-        echo "  ✓ ${proyecto}: ${n_files} files generados"
+        echo "  ✓ ${proyecto}: ${n_files} files generated"
     else
-        echo "  ✗ ${proyecto}: directory no found"
+        echo "  ✗ ${proyecto}: directory not found"
     fi
 done
 
@@ -175,13 +175,13 @@ N_MODELS=$(find "${MODELS_DIR}" -type f -name "*.pt" -o -name "*.pth" 2>/dev/nul
 N_FIGURES=$(find "${FIGURES_DIR}" -type f -name "*.tiff" 2>/dev/null | wc -l)
 
 echo ""
-echo "  Models guardados: ${N_MODELS}"
-echo "  Figuras generadas: ${N_FIGURES}"
+echo "  Saved models: ${N_MODELS}"
+echo "  Generated figures: ${N_FIGURES}"
 
 echo ""
-echo "  Uso final de GPU:"
+echo "  Final GPU usage:"
 nvidia-smi --query-gpu=name,memory.used,memory.total,utilization.gpu \
-    --format=csv,noheader 2>/dev/null || echo "  (nvidia-smi no disponible)"
+    --format=csv,noheader 2>/dev/null || echo "  (nvidia-smi not available)"
 
 ELAPSED=$SECONDS
 HOURS=$((ELAPSED / 3600))
@@ -190,10 +190,10 @@ SECS=$((ELAPSED % 60))
 
 echo ""
 echo "=================================================================="
-echo "  PIPELINE DE DEEP LEARNING COMPLETADO"
+echo "  DEEP LEARNING PIPELINE COMPLETED"
 echo "=================================================================="
-echo "Fecha de finalización: $(date '+%Y-%m-%d %H:%M:%S')"
-echo "Time total         : ${HOURS}h ${MINUTES}m ${SECS}s"
-echo "Proyectos ejecutados : A (Predictor) y B (VAE)"
-echo "Código de salida     : 0"
+echo "End Date: $(date '+%Y-%m-%d %H:%M:%S')"
+echo "Total time         : ${HOURS}h ${MINUTES}m ${SECS}s"
+echo "Executed projects : A (Predictor) y B (VAE)"
+echo "Exit code     : 0"
 echo "=================================================================="

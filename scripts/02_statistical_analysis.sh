@@ -14,9 +14,9 @@ echo "Fecha de inicio   : $(date '+%Y-%m-%d %H:%M:%S')"
 echo "ID del trabajo    : ${SLURM_JOB_ID}"
 echo "Nombre del trabajo: ${SLURM_JOB_NAME}"
 echo "Nodo asignado     : ${SLURM_NODELIST}"
-echo "CPUs asignados    : ${SLURM_CPUS_PER_TASK}"
-echo "Memoria asignada  : ${SLURM_MEM_PER_NODE} MB"
-echo "Directory trabajo: $(pwd)"
+echo "Allocated CPUs    : ${SLURM_CPUS_PER_TASK}"
+echo "Allocated Memory  : ${SLURM_MEM_PER_NODE} MB"
+echo "Working Directory: $(pwd)"
 echo "=================================================================="
 
 SECONDS=0
@@ -27,14 +27,14 @@ RESULTS_DIR="${STATS_DIR}/results"
 FIGURES_DIR="${STATS_DIR}/figures"
 
 echo ""
-echo ">>> [1/5] Configurando directorios..."
+echo ">>> [1/5] Configuring directories..."
 mkdir -p "${RESULTS_DIR}"
 mkdir -p "${FIGURES_DIR}"
 mkdir -p "${ANALYSIS_DIR}/logs"
 echo "    Directory de análisis : ${ANALYSIS_DIR}"
 echo "    Directory estadísticas: ${STATS_DIR}"
 echo "    Directory results  : ${RESULTS_DIR}"
-echo "    Directory figuras     : ${FIGURES_DIR}"
+echo "    Figures Directory     : ${FIGURES_DIR}"
 
 echo ""
 echo ">>> [2/5] Configurando entorno Python..."
@@ -49,7 +49,7 @@ echo "    Versión de Python   : $(python --version 2>&1)"
 
 echo ""
 echo ">>> [3/5] Running análisis estadístico en Python..."
-echo "    Inicio: $(date '+%H:%M:%S')"
+echo "    Start: $(date '+%H:%M:%S')"
 
 python "${STATS_DIR}/statistical_analysis.py" \
     --otu_table "${ANALYSIS_DIR}/03_classification/combined/otu_table.csv" \
@@ -59,10 +59,10 @@ python "${STATS_DIR}/statistical_analysis.py" \
 
 RSCRIPT_EXIT=$?
 
-echo "    Fin: $(date '+%H:%M:%S')"
+echo "    End: $(date '+%H:%M:%S')"
 
 echo ""
-echo ">>> [5/5] Verificando results generados..."
+echo ">>> [5/5] Checking generated results..."
 
 if [ ${RSCRIPT_EXIT} -eq 0 ]; then
     echo "    ✓ Script R completed exitosamente"
@@ -71,7 +71,7 @@ if [ ${RSCRIPT_EXIT} -eq 0 ]; then
     N_FIGURES=$(find "${FIGURES_DIR}" -type f -name "*.tiff" 2>/dev/null | wc -l)
     
     echo "    ✓ Files de results generados: ${N_RESULTS}"
-    echo "    ✓ Figuras generadas: ${N_FIGURES}"
+    echo "    ✓ Generated figures: ${N_FIGURES}"
     
     echo ""
     echo "    Results:"
@@ -92,9 +92,9 @@ SECS=$((ELAPSED % 60))
 
 echo ""
 echo "=================================================================="
-echo "  ANÁLISIS ESTADÍSTICO COMPLETADO"
+echo "  ANÁLISIS ESTADÍSTICO COMPLETED"
 echo "=================================================================="
-echo "Fecha de finalización: $(date '+%Y-%m-%d %H:%M:%S')"
-echo "Time total         : ${HOURS}h ${MINUTES}m ${SECS}s"
-echo "Código de salida     : 0"
+echo "End Date: $(date '+%Y-%m-%d %H:%M:%S')"
+echo "Total time         : ${HOURS}h ${MINUTES}m ${SECS}s"
+echo "Exit code     : 0"
 echo "=================================================================="

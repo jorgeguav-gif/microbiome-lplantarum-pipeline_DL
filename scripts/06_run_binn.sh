@@ -12,12 +12,12 @@ conda activate bio_pytorch
 ANALYSIS_DIR="/scratch/users/sgonzalezh852/seq/Seq_Jorge/analysis"
 
 echo "=========================================================="
-echo " INICIANDO RED NEURONAL INFORMADA BIOLÓGICAMENTE (BINN)"
+echo " STARTING BIOLOGICALLY INFORMED NEURAL NETWORK (BINN)"
 echo "=========================================================="
 
 python ${ANALYSIS_DIR}/05_deep_learning/06_metabolic_binn.py
 
 echo "=========================================================="
-echo " ENTRENAMIENTO BINN COMPLETADO."
-echo " Revisa 05_deep_learning/figures/binn_metabolic_importance.tiff"
+echo " BINN TRAINING COMPLETED."
+echo " Check 05_deep_learning/figures/binn_metabolic_importance.tiff"
 echo "=========================================================="

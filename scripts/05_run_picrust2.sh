@@ -14,16 +14,16 @@ TSV="${ANALYSIS_DIR}/04_statistics/picrust2_input.tsv"
 OUT_DIR="${ANALYSIS_DIR}/04_statistics/picrust2_out"
 
 echo "=========================================================="
-echo " PASO 1: Descargar secuencias 16S de NCBI (Biopython)"
+echo " STEP 1: Download 16S sequences from NCBI (Biopython)"
 echo "=========================================================="
 conda activate bio_pytorch
 python ${ANALYSIS_DIR}/hpc_scripts/05_prepare_picrust2.py
 
 echo "=========================================================="
-echo " PASO 2: Ejecutar PICRUSt2"
+echo " STEP 2: Run PICRUSt2"
 echo "=========================================================="
 
-echo "Limpiando instalación anterior..."
+echo "Cleaning previous installation..."
 rm -rf ${ANALYSIS_DIR}/picrust2_env
 
 cd ${ANALYSIS_DIR}/hpc_scripts
@@ -34,17 +34,17 @@ if [ ! -f "micromamba" ] && [ ! -f "picrust2.sif" ]; then
 fi
 
 if [ ! -f "picrust2.sif" ]; then
-    echo "Instalando PICRUSt2 v2.5.3 con Micromamba (incluyendo canal 'r')..."
+    echo "Installing PICRUSt2 v2.5.3 with Micromamba (including 'r' channel)..."
     ./micromamba create -y -p ${ANALYSIS_DIR}/picrust2_env -c conda-forge -c bioconda -c r -c defaults picrust2=2.5.3 || {
-        echo "Micromamba falló debido a librerías de tu clúster. Activando Plan B: Contenedores..."
+        echo "Micromamba failed due to cluster libraries. Activating Plan B: Containers..."
         if command -v apptainer &> /dev/null; then
-            echo "Usando Apptainer para descargar el contenedor..."
+            echo "Using Apptainer to download the container..."
             apptainer pull picrust2.sif docker://picrust/picrust2:2.5.2
         elif command -v singularity &> /dev/null; then
-            echo "Usando Singularity para descargar el contenedor..."
+            echo "Using Singularity to download the container..."
             singularity pull picrust2.sif docker://picrust/picrust2:2.5.2
         else
-            echo "CRÍTICO: No se pudo instalar por Conda y Singularity/Apptainer no están disponibles en este clúster."
+            echo "CRITICAL: Could not install via Conda and Singularity/Apptainer are not available on this cluster."
             exit 1
         fi
     }
@@ -53,19 +53,19 @@ fi
 rm -rf ${OUT_DIR}
 
 if [ -f "picrust2.sif" ]; then
-    echo "Running a través de contenedor aislado..."
+    echo "Running via isolated container..."
     if command -v apptainer &> /dev/null; then
         apptainer exec picrust2.sif picrust2_pipeline.py -s ${FASTA} -i ${TSV} -o ${OUT_DIR} -p 8 --verbose
     else
         singularity exec picrust2.sif picrust2_pipeline.py -s ${FASTA} -i ${TSV} -o ${OUT_DIR} -p 8 --verbose
     fi
 else
-    echo "Running a través de Micromamba..."
+    echo "Running via Micromamba..."
     eval "$(./micromamba shell hook -s bash)"
     micromamba activate ${ANALYSIS_DIR}/picrust2_env
     picrust2_pipeline.py -s ${FASTA} -i ${TSV} -o ${OUT_DIR} -p 8 --verbose
 fi
 
 echo "=========================================================="
-echo " PICRUSt2 Completed. Results en ${OUT_DIR}"
+echo " PICRUSt2 Completed. Results at ${OUT_DIR}"
 echo "=========================================================="

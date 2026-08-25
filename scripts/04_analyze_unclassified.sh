@@ -8,7 +8,7 @@
 set -e
 
 echo "=================================================================="
-echo "  IDENTIFICACIÓN DE 'MATERIA OSCURA' (UNCLASSIFIED) VÍA BLAST"
+echo "  IDENTIFICATION OF 'DARK MATTER' (UNCLASSIFIED) VIA BLAST"
 echo "=================================================================="
 
 source ~/.bashrc
@@ -20,16 +20,16 @@ ANALYSIS_DIR="/scratch/users/sgonzalezh852/seq/Seq_Jorge/analysis"
 FASTQ_FILE=$(find "${LOTE1_UNCLASS_DIR}" -name "*.fastq.gz" | head -n 1)
 
 if [ -z "${FASTQ_FILE}" ]; then
-    echo "ERROR: Not found ningún file fastq.gz en ${LOTE1_UNCLASS_DIR}"
+    echo "ERROR: No fastq.gz file found in ${LOTE1_UNCLASS_DIR}"
     exit 1
 fi
 
-echo "File Unclassified detectado: ${FASTQ_FILE}"
-echo "Starting BLAST remoto (puede demorar unos minutos)..."
+echo "Unclassified File detected: ${FASTQ_FILE}"
+echo "Starting remote BLAST (may take a few minutes)..."
 
 python "${ANALYSIS_DIR}/hpc_scripts/04_blast_unclassified.py" \
     --fastq "${FASTQ_FILE}" \
     --output "${ANALYSIS_DIR}/04_statistics/results/unclassified_blast_report.csv" \
     --n_seqs 30
 
-echo "¡Completed! Revisa el file unclassified_blast_report.csv"
+echo "Completed! Check the unclassified_blast_report.csv file"

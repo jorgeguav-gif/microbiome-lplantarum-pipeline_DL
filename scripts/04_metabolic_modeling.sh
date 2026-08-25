@@ -8,13 +8,13 @@
 set -eo pipefail
 
 echo "=========================================================="
-echo "Starting Phase 3: Modelado Metabólico con MICOM (AGORA1.03)"
+echo "Starting Phase 3: Metabolic Modeling with MICOM (AGORA1.03)"
 echo "Job ID: $SLURM_JOB_ID"
 echo "Node: $SLURMD_NODENAME"
-echo "Fecha y Hora de Inicio: $(date)"
+echo "Fecha y Hora de Start: $(date)"
 echo "=========================================================="
 
-echo "[$(date +'%Y-%m-%d %H:%M:%S')] Inicializando entorno Conda..."
+echo "[$(date +'%Y-%m-%d %H:%M:%S')] Initializing Conda environment..."
 source ~/.bashrc
 conda activate microbiota_env
 
@@ -24,10 +24,10 @@ PYTHON_SCRIPT="${MODEL_DIR}/run_micom.py"
 
 cd "${BASE_DIR}"
 
-echo "[$(date +'%Y-%m-%d %H:%M:%S')] Running pipeline computacional (64 samples en 32 cores)..."
+echo "[$(date +'%Y-%m-%d %H:%M:%S')] Running computational pipeline (64 samples on 32 cores)..."
 python "${PYTHON_SCRIPT}"
 
 echo "=========================================================="
-echo "Phase 3 Completada Exitosamente"
-echo "Fecha y Hora de Finalizacion: $(date)"
+echo "Phase 3 Completed Successfully"
+echo "End Date and Time: $(date)"
 echo "=========================================================="
