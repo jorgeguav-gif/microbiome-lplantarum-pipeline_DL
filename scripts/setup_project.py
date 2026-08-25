@@ -125,6 +125,6 @@ print("=" * 60)
 for d in DIRECTORIES:
     print(f"  📁 analysis/{d}/")
 print(f"  📄 analysis/metadata_template.csv ({len(rows)} samples)")
-print("\n✅ Proyecto configurado correctamente.")
+print("\n✅ Project configured correctly.")
 print("\n⚠️  SIGUIENTE PASO: Completar metadata_template.csv con los")
 print("   datos experimentales reales (sexo, tratamiento, etc.)")

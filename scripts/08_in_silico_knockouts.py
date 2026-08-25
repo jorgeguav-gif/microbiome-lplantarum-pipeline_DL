@@ -50,7 +50,7 @@ def main():
     taxa = dataset.otu.columns
     input_dim = X_scaled.shape[1]
     
-    print("[INFO] Restaurando red neuronal entrenada (VAE)...")
+    print("[INFO] Restoring trained neural network (VAE)...")
     if not os.path.exists(model_path):
         print(f"[ERROR] Not found el model entrenado en {model_path}")
         print("Asegúrate de haber ejecutado 03_deep_learning.sh previamente.")
@@ -67,7 +67,7 @@ def main():
     print("[INFO] Calculating puntajes de Eubiosis base (Real)...")
     baseline_scores = get_dysbiosis_scores(model, X_tensor)
     
-    print("[INFO] Preparando microcirugía computacional (Knockouts)...")
+    print("[INFO] Preparing computational microsurgery (Knockouts)...")
     mean_abundances = X_rel.mean(axis=0)
     top_indices = np.argsort(mean_abundances)[-50:]
     

@@ -52,7 +52,7 @@ def fdr_bh(pvals):
 # ==========================================
 # ==========================================
 def build_cooccurrence_network(clr_df, out_dir):
-    print("\n[INFO] Construyendo Red de Coocurrencia Ecológica (Tradicional)...")
+    print("\n[INFO] Building Ecological Co-occurrence Network (Traditional)...")
     
     taxa = clr_df.columns.tolist()
     n_taxa = len(taxa)
@@ -98,7 +98,7 @@ def build_cooccurrence_network(clr_df, out_dir):
     G.remove_nodes_from(isolated_nodes)
     
     if len(G.nodes) == 0:
-        print("[WARNING] Ninguna interacción pasó los filtros estadísticos estrictos.")
+        print("[WARNING] No interactions passed strict statistical filters.")
         return
         
     print("[INFO] Detectando Guilds Funcionales usando Modularity (Louvain alternativo)...")
@@ -183,14 +183,14 @@ def train_autoencoder_and_extract_guilds(clr_df, out_dir, meta):
         optimizer.step()
         
         if (epoch+1) % 100 == 0:
-            print(f"       Epoch {epoch+1}/{epochs} | Loss Total: {loss.item():.4f} (Recon: {loss_recon.item():.4f})")
+            print(f"Epoch {epoch+1}/{epochs} | Total Loss: {loss.item():.4f} (Recon: {loss_recon.item():.4f})")
             
     # Shape = [latent_dim, input_dim] -> [10, N_Bacterias]
     encoder_weights = model.encoder.weight.detach().numpy()
     
     weights_df = pd.DataFrame(encoder_weights.T, index=taxa, columns=[f"Latent_{i+1}" for i in range(latent_dim)])
     
-    print("[INFO] Realizando Clustering Jerárquico sobre el Espacio Latente...")
+    print("[INFO] Performing Hierarchical Clustering on Latent Space...")
     dist_matrix = pdist(weights_df.values, metric='cosine')
     linkage_matrix = linkage(dist_matrix, method='ward')
     
@@ -215,7 +215,7 @@ def train_autoencoder_and_extract_guilds(clr_df, out_dir, meta):
     g.savefig(out_path_svg, format='svg', bbox_inches='tight')
     
     plt.close()
-    print(f"[EXITO] Gráficas estructurales guardadas en: {out_dir} (TIFF y SVG)")
+    print(f"[SUCCESS] Structural graphs saved in: {out_dir} (TIFF and SVG)")
     
     # ========================================================
     # ========================================================

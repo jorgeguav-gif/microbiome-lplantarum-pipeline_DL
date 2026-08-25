@@ -37,7 +37,7 @@ def fetch_16s_sequence(species_name):
         else:
             return None
     except Exception as e:
-        print(f"  [ERROR] Falla en conexión NCBI para {species_name}: {e}")
+        print(f"[ERROR] NCBI connection failure for {species_name}: {e}")
         return None
 
 def main():
@@ -64,7 +64,7 @@ def main():
     valid_species = []
     
     for i, sp in enumerate(otu.index):
-        print(f"[{i+1}/{len(otu.index)}] Buscando 16S para: {sp}...")
+        print(f"[{i+1}/{len(otu.index)}] Searching 16S for: {sp}...")
         seq = fetch_16s_sequence(sp)
         if seq:
             safe_id = sp.replace(" ", "_").replace("[", "").replace("]", "")
@@ -75,14 +75,14 @@ def main():
         time.sleep(0.5) # Respetar límites de API NCBI
         
     SeqIO.write(records, out_fasta, "fasta")
-    print(f"\n[INFO] FASTA guardado con {len(records)} secuencias: {out_fasta}")
+    print(f"\n[INFO] FASTA saved with {len(records)} sequences: {out_fasta}")
     
     otu_valid = otu.loc[valid_species]
     otu_valid.index = [sp.replace(" ", "_").replace("[", "").replace("]", "") for sp in otu_valid.index]
     
     otu_valid.index.name = '#OTU ID'
     otu_valid.to_csv(out_tsv, sep='\t')
-    print(f"[INFO] Matriz TSV guardada: {out_tsv}")
+    print(f"[INFO] Saved TSV array: {out_tsv}")
 
 if __name__ == "__main__":
     main()

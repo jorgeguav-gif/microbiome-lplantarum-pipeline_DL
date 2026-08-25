@@ -117,7 +117,7 @@ class DatosMicrobioma:
         self.otu = pd.read_csv(otu_path, index_col=0)
         logger.info(f"  Dimensiones OTU: {self.otu.shape[0]} samples × {self.otu.shape[1]} taxa")
 
-        logger.info(f"Cargando metadata: {metadata_path}")
+        logger.info(f"Loading metadata: {metadata_path}")
         self.metadata = pd.read_csv(metadata_path, index_col=0)
         logger.info(f"  Dimensiones metadata: {self.metadata.shape}")
 
@@ -181,7 +181,7 @@ class DatosMicrobioma:
             self.le_sexo = LabelEncoder()
             self.sexo = self.le_sexo.fit_transform(self.metadata[self.col_sexo])
             self.clases_sexo = list(self.le_sexo.classes_)
-            logger.info(f"  Clases sexo: {self.clases_sexo}")
+            logger.info(f"Sex classes: {self.sex_classes}")
         else:
             self.sexo = np.zeros(len(self.metadata), dtype=int)
             self.clases_sexo = ['Desconocido']
@@ -401,7 +401,7 @@ def ejecutar_proyecto_a(args):
 
     for fold, (train_idx, test_idx) in enumerate(cv.split(X_scaled, y_trat)):
         if fold % max(1, n_splits // 10) == 0:
-            logger.info(f"  Fold {fold + 1}/{n_splits}")
+            logger.info(f"Fold {fold + 1}/{n_splits}")
 
         X_train = X_scaled[train_idx]
         X_test = X_scaled[test_idx]
@@ -690,7 +690,7 @@ class VAEMicrobioma(nn.Module):
 def ejecutar_proyecto_b(args):
     
     logger.info("=" * 60)
-    logger.info("  PROYECTO B: VAE PARA EUBIOSIS")
+    logger.info("PROJECT B: VAE FOR EUBIOSIS")
     logger.info("=" * 60)
 
     device = detectar_dispositivo()
@@ -773,7 +773,7 @@ def ejecutar_proyecto_b(args):
                         f"KL: {epoch_kl / n_control:.4f} | "
                         f"β: {beta:.3f}")
 
-    logger.info("\n  Evaluating error de reconstrucción...")
+    logger.info("\n Evaluating rebuild error...")
     model.eval()
 
     with torch.no_grad():
@@ -801,7 +801,7 @@ def ejecutar_proyecto_b(args):
 
     df_eubiosis.to_csv(os.path.join(args.output_dir, 'eubiosis_scores.csv'), index=False)
 
-    logger.info("\n  Score de disbiosis por grupo:")
+    logger.info("\nDysbiosis score by group:")
     resumen = df_eubiosis.groupby(['Treatment', 'Sex'])['Score_Disbiosis'].agg(
         ['mean', 'std', 'count']
     ).round(3)
@@ -933,7 +933,7 @@ def ejecutar_proyecto_b(args):
         'std_ctrl': std_ctrl,
     }, os.path.join(args.models_dir, 'vae_eubiosis.pt'))
 
-    logger.info("  ✓ Proyecto B completed")
+    logger.info("✓ Project B completed")
     return metricas
 
 # =============================================================================
@@ -1016,7 +1016,7 @@ def cargar_lecturas_y_taxonomia(reads_dir: str, taxonomy_ref: str,
 
     if not fastq_files:
         logger.warning(f"No se encontraron files FASTQ en {reads_dir}")
-        logger.info("Generating datos sintéticos de demostración...")
+        logger.info("Generating synthetic demo data...")
         return _generar_datos_sinteticos_transformer(max_reads)
 
     tax_assignments = {}
@@ -1034,7 +1034,7 @@ def cargar_lecturas_y_taxonomia(reads_dir: str, taxonomy_ref: str,
             logger.warning(f"Error leyendo {emu_file}: {e}")
 
     if not tax_assignments:
-        logger.warning("No se pudieron cargar asignaciones taxonómicas")
+        logger.warning("Taxonomic assignments could not be loaded")
         return _generar_datos_sinteticos_transformer(max_reads)
 
     n_read = 0
@@ -1073,7 +1073,7 @@ def cargar_lecturas_y_taxonomia(reads_dir: str, taxonomy_ref: str,
 
 def _generar_datos_sinteticos_transformer(n_reads: int = 5000):
     
-    logger.info("Generating datos sintéticos de 16S para demostración...")
+    logger.info("Generating 16S synthetic data for demonstration...")
 
     generos = [
         'Lactobacillus', 'Bifidobacterium', 'Bacteroides',
@@ -1116,7 +1116,7 @@ def _generar_datos_sinteticos_transformer(n_reads: int = 5000):
 def ejecutar_proyecto_c(args):
     
     logger.info("=" * 60)
-    logger.info("  PROYECTO C: TRANSFORMER PARA CLASIFICACIÓN 16S")
+    logger.info("PROJECT C: TRANSFORMER FOR 16S CLASSIFICATION")
     logger.info("=" * 60)
 
     device = detectar_dispositivo()
@@ -1130,7 +1130,7 @@ def ejecutar_proyecto_c(args):
     )
 
     if len(secuencias) == 0:
-        logger.error("No se pudieron cargar secuencias. Abortando Proyecto C.")
+        logger.error("Could not load sequences. Aborting Project C.")
         return {}
 
     le_genero = LabelEncoder()

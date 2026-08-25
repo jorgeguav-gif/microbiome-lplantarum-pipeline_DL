@@ -134,7 +134,7 @@ def main():
 
     # =========================================================================
     # =========================================================================
-    print("[INFO] Generating Heatmap de Especies...")
+    print("[INFO] Generating Heatmap of Species...")
     
     top_20 = otu_rel.mean(axis=1).nlargest(20).index
     df_heat_full = otu_rel.loc[top_20].T.join(meta[['tratamiento']])

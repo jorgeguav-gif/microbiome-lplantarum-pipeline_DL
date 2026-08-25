@@ -14,7 +14,7 @@ TSV="${ANALYSIS_DIR}/04_statistics/picrust2_input.tsv"
 OUT_DIR="${ANALYSIS_DIR}/04_statistics/picrust2_out"
 
 echo "=========================================================="
-echo " STEP 1: Download 16S sequences from NCBI (Biopython)"
+echo "STEP 1: Download 16S sequences from NCBI (Biopython)"
 echo "=========================================================="
 conda activate bio_pytorch
 python ${ANALYSIS_DIR}/hpc_scripts/05_prepare_picrust2.py

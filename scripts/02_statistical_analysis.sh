@@ -14,7 +14,7 @@ echo "Fecha de inicio   : $(date '+%Y-%m-%d %H:%M:%S')"
 echo "ID del trabajo    : ${SLURM_JOB_ID}"
 echo "Nombre del trabajo: ${SLURM_JOB_NAME}"
 echo "Nodo asignado     : ${SLURM_NODELIST}"
-echo "Allocated CPUs    : ${SLURM_CPUS_PER_TASK}"
+echo "Allocated CPUs : ${SLURM_CPUS_PER_TASK}"
 echo "Allocated Memory  : ${SLURM_MEM_PER_NODE} MB"
 echo "Working Directory: $(pwd)"
 echo "=================================================================="
@@ -48,7 +48,7 @@ echo "    Python found en: $(which python)"
 echo "    Versión de Python   : $(python --version 2>&1)"
 
 echo ""
-echo ">>> [3/5] Running análisis estadístico en Python..."
+echo ">>> [3/5] Running statistical analysis in Python..."
 echo "    Start: $(date '+%H:%M:%S')"
 
 python "${STATS_DIR}/statistical_analysis.py" \

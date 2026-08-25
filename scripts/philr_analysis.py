@@ -434,7 +434,7 @@ def main():
     
     if not df_kw.empty:
         top_balance = df_kw.iloc[0]['Balance']
-        print(f"El balance más diferencial es: {top_balance}")
+        print(f"The most differential balance is: {top_balance}")
         
         plot_df = df_bal[[top_balance]].join(meta)
         
@@ -453,7 +453,7 @@ def main():
         fig.savefig(os.path.join(args.figures_dir, "philr_top_balances.svg"), format='svg', bbox_inches='tight')
         plt.close(fig)
 
-    print("Fase 2 (PhILR en Python) completada exitosamente.")
+    print("Phase 2 (PhILR in Python) successfully completed.")
 
 if __name__ == "__main__":
     main()

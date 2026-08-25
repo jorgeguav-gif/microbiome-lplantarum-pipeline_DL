@@ -21,5 +21,5 @@ python ${ANALYSIS_DIR}/05_deep_learning/07_cooccurrence_and_guilds.py
 echo "=========================================================="
 echo " ANALYSIS COMPLETED."
 echo " Check 05_deep_learning/figures/red_coocurrencia_tradicional.tiff"
-echo " and latent_guilds_deep_learning.tiff"
+echo "and latent_guilds_deep_learning.tiff"
 echo "=========================================================="

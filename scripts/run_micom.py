@@ -47,7 +47,7 @@ def simulate_sample(args):
         sol = com.optimize(fluxes=True, pfba=False)
         
         if sol is None or sol.fluxes is None:
-            print(f"La optimizacion FBA no encontro solucion viable (o devolvio None) para la sample {sample_id}.")
+            print(f"The FBA optimization found no viable solution (or returned None) for sample {sample_id}.")
             return None, None
             
         rates = sol.members.copy()

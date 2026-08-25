@@ -95,7 +95,7 @@ def procesar_barcode(barcode_dir: str, output_dir: str,
     files_gz = listar_fastq_gz(barcode_dir)
 
     if not files_gz:
-        print(f"  [AVISO] No se encontraron files .fastq.gz en {barcode_name}")
+        print(f"[NOTICE] No .fastq.gz files found in {barcode_name}")
         return {
             'barcode': barcode_name,
             'total_reads': 0, 'passed_reads': 0,
@@ -170,7 +170,7 @@ def escribir_resumen_csv(stats_list: list, output_path: str):
         for stats in stats_list:
             writer.writerow(stats)
 
-    print(f"\n✓ Resumen CSV saved at: {output_path}")
+    print(f"\n✓ Summary CSV saved at: {output_path}")
 
 # =============================================================================
 # =============================================================================
@@ -218,11 +218,11 @@ def main():
     args = parser.parse_args()
 
     print("=" * 72)
-    print("  PREPROCESAMIENTO DE LECTURAS 16S rRNA — Oxford Nanopore")
+    print("PREPROCESSING 16S rRNA READS — Oxford Nanopore")
     print("=" * 72)
-    print(f"  Directorio de entrada : {args.input}")
-    print(f"  Directorio de salida  : {args.output}")
-    print(f"  Filtro de longitud    : {args.min_length} – {args.max_length} bp")
+    print(f"Input directory: {args.input}")
+    print(f"Output directory: {args.output}")
+    print(f"Length filter: {args.min_length} – {args.max_length} bp")
     print(f"  Filtro de calidad     : Q-score medio ≥ {args.min_quality}")
     print("=" * 72)
 
@@ -232,7 +232,7 @@ def main():
         print(f"\n[ERROR] {e}", file=sys.stderr)
         sys.exit(1)
 
-    print(f"\n→ Directorio fastq_pass found: {fastq_pass_dir}")
+    print(f"\n→ Directory fastq_pass found: {fastq_pass_dir}")
 
     barcodes = obtener_barcodes(fastq_pass_dir)
     if not barcodes:
@@ -249,7 +249,7 @@ def main():
     print(f"\n→ Lecturas filtradas se guardarán en: {filtered_dir}")
 
     print("\n" + "-" * 72)
-    print("  Processing barcodes...")
+    print("Processing barcodes...")
     print("-" * 72)
 
     inicio = time.time()
@@ -276,12 +276,12 @@ def main():
     pct_all = (passed_all / total_all * 100) if total_all > 0 else 0.0
 
     print("\n" + "=" * 72)
-    print("  RESUMEN GLOBAL")
+    print("OVERALL SUMMARY")
     print("=" * 72)
     print(f"  Lecturas totales      : {total_all:,}")
     print(f"  Lecturas aprobadas    : {passed_all:,} ({pct_all:.1f}%)")
     print(f"  Descartadas (longitud): {failed_len_all:,}")
-    print(f"  Descartadas (calidad) : {failed_qual_all:,}")
+    print(f"Discarded (quality) : {failed_qual_all:,}")
     print(f"  Tiempo de ejecución   : {elapsed:.1f} segundos")
     print("=" * 72)
 
