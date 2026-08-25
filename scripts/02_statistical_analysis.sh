@@ -8,12 +8,12 @@
 set -eo pipefail
 
 echo "=================================================================="
-echo "  ANÁLISIS ESTADÍSTICO DEL MICROBIOMA 16S"
+echo "  16S MICROBIOME STATISTICAL ANALYSIS"
 echo "=================================================================="
-echo "Fecha de inicio   : $(date '+%Y-%m-%d %H:%M:%S')"
-echo "ID del trabajo    : ${SLURM_JOB_ID}"
-echo "Nombre del trabajo: ${SLURM_JOB_NAME}"
-echo "Nodo asignado     : ${SLURM_NODELIST}"
+echo "Start date   : $(date '+%Y-%m-%d %H:%M:%S')"
+echo "Job ID    : ${SLURM_JOB_ID}"
+echo "Job name: ${SLURM_JOB_NAME}"
+echo "Assigned node     : ${SLURM_NODELIST}"
 echo "Allocated CPUs : ${SLURM_CPUS_PER_TASK}"
 echo "Allocated Memory  : ${SLURM_MEM_PER_NODE} MB"
 echo "Working Directory: $(pwd)"
@@ -31,21 +31,21 @@ echo ">>> [1/5] Configuring directories..."
 mkdir -p "${RESULTS_DIR}"
 mkdir -p "${FIGURES_DIR}"
 mkdir -p "${ANALYSIS_DIR}/logs"
-echo "    Directory de análisis : ${ANALYSIS_DIR}"
-echo "    Directory estadísticas: ${STATS_DIR}"
-echo "    Directory results  : ${RESULTS_DIR}"
+echo "    Analysis directory : ${ANALYSIS_DIR}"
+echo "    Statistics directory: ${STATS_DIR}"
+echo "    Results directory  : ${RESULTS_DIR}"
 echo "    Figures Directory     : ${FIGURES_DIR}"
 
 echo ""
-echo ">>> [2/5] Configurando entorno Python..."
+echo ">>> [2/5] Configuring Python environment..."
 source ~/.bashrc
 conda activate bio_pytorch 2>/dev/null || {
-    echo "ERROR: No se pudo cargar el entorno bio_pytorch."
+    echo "ERROR: Could not load bio_pytorch environment."
     exit 1
 }
 
-echo "    Python found en: $(which python)"
-echo "    Versión de Python   : $(python --version 2>&1)"
+echo "    Python found at: $(which python)"
+echo "    Python version   : $(python --version 2>&1)"
 
 echo ""
 echo ">>> [3/5] Running statistical analysis in Python..."
@@ -65,23 +65,23 @@ echo ""
 echo ">>> [5/5] Checking generated results..."
 
 if [ ${RSCRIPT_EXIT} -eq 0 ]; then
-    echo "    ✓ Script R completed exitosamente"
+    echo "    ✓ Python script completed successfully"
     
     N_RESULTS=$(find "${RESULTS_DIR}" -type f 2>/dev/null | wc -l)
     N_FIGURES=$(find "${FIGURES_DIR}" -type f -name "*.tiff" 2>/dev/null | wc -l)
     
-    echo "    ✓ Files de results generados: ${N_RESULTS}"
+    echo "    ✓ Generated results files: ${N_RESULTS}"
     echo "    ✓ Generated figures: ${N_FIGURES}"
     
     echo ""
     echo "    Results:"
-    ls -lh "${RESULTS_DIR}/" 2>/dev/null || echo "    (vacío)"
+    ls -lh "${RESULTS_DIR}/" 2>/dev/null || echo "    (empty)"
     echo ""
-    echo "    Figuras:"
-    ls -lh "${FIGURES_DIR}/" 2>/dev/null || echo "    (vacío)"
+    echo "    Figures:"
+    ls -lh "${FIGURES_DIR}/" 2>/dev/null || echo "    (empty)"
 else
-    echo "    ✗ ERROR: El script R falló con código de salida ${RSCRIPT_EXIT}"
-    echo "    Revise el file de error: logs/stats_${SLURM_JOB_ID}.err"
+    echo "    ✗ ERROR: Script failed with exit code ${RSCRIPT_EXIT}"
+    echo "    Check error file: logs/stats_${SLURM_JOB_ID}.err"
     exit ${RSCRIPT_EXIT}
 fi
 
@@ -92,7 +92,7 @@ SECS=$((ELAPSED % 60))
 
 echo ""
 echo "=================================================================="
-echo "  ANÁLISIS ESTADÍSTICO COMPLETED"
+echo "  STATISTICAL ANALYSIS COMPLETED"
 echo "=================================================================="
 echo "End Date: $(date '+%Y-%m-%d %H:%M:%S')"
 echo "Total time         : ${HOURS}h ${MINUTES}m ${SECS}s"

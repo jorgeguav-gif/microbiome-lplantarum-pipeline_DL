@@ -8,9 +8,9 @@
 set -eo pipefail
 
 echo "=================================================================="
-echo "  INICIANDO FASE 2: PhILR (Python)"
+echo "  STARTING PHASE 2: PhILR (Python)"
 echo "=================================================================="
-echo "Fecha de inicio   : $(date '+%Y-%m-%d %H:%M:%S')"
+echo "Start date        : $(date '+%Y-%m-%d %H:%M:%S')"
 echo "=================================================================="
 
 source ~/.bashrc
@@ -19,7 +19,7 @@ conda activate bio_pytorch 2>/dev/null || conda activate microbiota_env
 BASE_DIR="/scratch/users/sgonzalezh852/seq/Seq_Jorge/analysis"
 PY_SCRIPT="${BASE_DIR}/04_statistics/philr_analysis.py"
 
-echo "Running script de análisis PhILR en Python..."
+echo "Running PhILR analysis script in Python..."
 python "${PY_SCRIPT}" \
     --otu_table "${BASE_DIR}/03_classification/combined/otu_table.csv" \
     --metadata "${BASE_DIR}/metadata.csv" \
@@ -27,7 +27,7 @@ python "${PY_SCRIPT}" \
     --figures_dir "${BASE_DIR}/figures"
 
 echo "=================================================================="
-echo "  FASE 2 COMPLETADA"
+echo "  PHASE 2 COMPLETED"
 echo "=================================================================="
-echo "Fecha de fin      : $(date '+%Y-%m-%d %H:%M:%S')"
+echo "End date          : $(date '+%Y-%m-%d %H:%M:%S')"
 echo "=================================================================="
